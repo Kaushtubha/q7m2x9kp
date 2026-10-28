@@ -19,16 +19,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/Python-3.11_Container-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11" />
   <img src="https://img.shields.io/badge/FastAPI-0.115%2B-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/React-19.3-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 19" />
-  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Vite-8.3-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
   <img src="https://img.shields.io/badge/TailwindCSS-4.3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="TailwindCSS" />
   <img src="https://img.shields.io/badge/Elexon_BMRS-Live_Stream-1E3A8A?style=flat-square" alt="Elexon BMRS" />
   <img src="https://img.shields.io/badge/Docker-Compose_v2-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker" />
   <img src="https://img.shields.io/badge/Pytest-35_Passed-10B981?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 35 Passed" />
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License" />
 </p>
 
 <p align="center">
@@ -57,10 +56,10 @@
 In the Great Britain wholesale electricity market, commercial procurement desks and utility energy buyers purchase power in day-ahead auctions prior to gate closure. Wind power is the largest renewable generation source on the British transmission grid, but its output is weather-dependent and volatile.
 
 Procurement analysts face two critical operational questions before committing capital:
-1. **Forecast Availability at Decision Time**: *What national wind generation forecast was available before our pre-noon day-ahead auction deadline?*
-2. **Quantitative Forecast Error**: *When physical delivery occurred, how accurate was that forecast, and did it systematically over-predict (creating physical shortfall risk) or under-predict (creating surplus risk)?*
+1. **Forecast Availability at Decision Time**: *What national wind generation forecast was published and available before our pre-noon day-ahead auction deadline?*
+2. **Quantitative Forecast Error**: *When physical delivery occurred, how accurate was that forecast, and did it systematically over-predict (creating physical volume shortfall risk) or under-predict (creating surplus risk)?*
 
-**WindLens** answers both questions by streaming live, national-level data directly from the official **Elexon BMRS API v1**—ingesting National Grid ESO's `WINDFOR` forecast runs and `FUELHH` metered generation actuals for **January 2026** without synthetic mocks or fabricated data.
+**WindLens** answers both questions by streaming live, national-level data directly from the official **Elexon BMRS API v1**—ingesting National Grid ESO's `WINDFOR` forecast runs and `FUELHH` metered generation actuals for **January 2026** without synthetic mocks or fabricated numbers.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
@@ -80,15 +79,14 @@ Procurement analysts face two critical operational questions before committing c
 
 ## 🚀 Live Deployments
 
-| Component | Cloud Platform | Production URL | Status | Details |
+| Component | Cloud Platform | Verified Production URL | HTTP Status | Role & Verification Notes |
 |---|---|---|:---:|---|
-| **Production Frontend** | Vercel Edge | [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/) | **Active (200 OK)** | Canonical custom production domain |
-| **Frontend Alias** | Vercel Edge | [https://q7m2x9kp-seven.vercel.app/](https://q7m2x9kp-seven.vercel.app/) | **Active (307 Redirect)** | Default deployment redirected to canonical |
-| **Production Backend** | Render | [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com) | **Active (200 OK)** | Python 3.11 FastAPI containerized service |
-| **Health Check** | Render | [https://windlens-backend-5xda.onrender.com/health](https://windlens-backend-5xda.onrender.com/health) | **Active (200 OK)** | Service status & cutoff configuration metadata |
-| **API Documentation** | Render / OpenAPI | [https://windlens-backend-5xda.onrender.com/docs](https://windlens-backend-5xda.onrender.com/docs) | **Active (200 OK)** | Interactive Swagger UI API explorer |
-| **GitHub Repository** | GitHub | [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp) | **Active** | Anonymous repository identifier `q7m2x9kp` |
-| **Demonstration Video** | YouTube | *Unlisted Link Pending Recording* | **In Progress** | 7–10 min client & technical walkthrough |
+| **Production Frontend** | Vercel Edge | [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/) | **200 OK** | Verified canonical production domain. Serves optimized React 19 SPA. |
+| **Frontend Alias** | Vercel Edge | [https://q7m2x9kp-seven.vercel.app/](https://q7m2x9kp-seven.vercel.app/) | **307 Redirect** | Default deployment alias automatically redirected to canonical domain. |
+| **Production Backend** | Render Cloud | [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com) | **200 OK** | Containerized FastAPI backend (`python:3.11-slim`) in Frankfurt region. |
+| **Health Check** | Render Cloud | [https://windlens-backend-5xda.onrender.com/health](https://windlens-backend-5xda.onrender.com/health) | **200 OK** | Returns service health status and active default cutoff hour (`11` UTC). |
+| **API Documentation** | Render / OpenAPI | [https://windlens-backend-5xda.onrender.com/docs](https://windlens-backend-5xda.onrender.com/docs) | **200 OK** | Interactive Swagger UI API documentation and OpenAPI JSON schema. |
+| **GitHub Repository** | GitHub | [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp) | **Active** | Anonymous repository identifier `q7m2x9kp` matching submission spec. |
 
 > **Hosting Notice**: The backend is hosted on Render's free cloud tier. Inactivity for 15 minutes causes the container to spin down. The initial inbound request may require 30–45 seconds for cold start; subsequent requests respond in ~500 ms.
 
@@ -111,7 +109,7 @@ Below is an authentic screenshot of the production WindLens portal loaded with l
 
 ### 📊 Quantitative Uncertainty & Bias KPI Strip
 * **Mean Absolute Error (MAE)**: Measures average absolute deviation magnitude across matched delivery hours (`2,154 MW` for Week 1).
-* **Root Mean Squared Error (RMSE)**: Heavily penalizes large forecast misses that create severe balancing and reserve stress (`2,590 MW`).
+* **Root Mean Squared Error (RMSE)**: Heavily penalizes large forecast misses that create severe balancing and reserve procurement stress (`2,590 MW`).
 * **Mean Directional Bias**: Quantifies structural overforecasting or underforecasting (`+1,984 MW`, confirming persistent upward forecast bias across 153 of 168 hours).
 * **Interval Coverage**: Displays matched pairs against expected clock hours (`100.0%` — `168 / 168 hrs`).
 
@@ -123,7 +121,7 @@ Below is an authentic screenshot of the production WindLens portal loaded with l
 ### 📋 Reconciled Interval Audit Table & CSV Export
 * **Multi-Column Sortable Ledger**: Displays delivery hour, forecast MW, actual MW, signed deviation MW, publication run timestamp, and lead time in hours.
 * **High-Risk Interval Sorting**: Click column headers to sort by highest positive error (shortfall risk) or highest negative error (surplus risk).
-* **1-Click CSV Download**: Exports the entire reconciled dataset with full provenance into Excel or trading spreadsheets.
+* **1-Click CSV Download**: Exports the entire reconciled dataset with full provenance into Excel or trading spreadsheets (`windlens_{dateFrom}_to_{dateTo}_cutoff_{cutoffHour}UTC.csv`).
 * **In-App Methodology Modal**: Displays mathematical derivations, error sign conventions, and BMRS streaming endpoint documentation.
 
 ---
@@ -136,12 +134,12 @@ WindLens maintains a strict separation of concerns between an optimized React 19
 graph TB
     subgraph ClientLayer ["Client Presentation Layer (Vercel Edge)"]
         Browser["Modern Web Browser"]
-        SPA["React 19 SPA (Vite 8 + TypeScript 5.9)"]
+        SPA["React 19 SPA (Vite 8 + TypeScript 7)"]
         KPICards["Executive KPI Strip (MAE, RMSE, Bias, Coverage)"]
         LineChart["Dual-Series Line Chart (Recharts)"]
         BarChart["Hourly Deviation Residual Bar Chart"]
         AuditTable["Reconciled Delivery Interval Table"]
-        CutoffControl["Decision Cutoff Dropdown (09:30, 11:00, 15:30 UTC)"]
+        CutoffControl["Decision Cutoff Selector (09:30, 11:00, 15:30 UTC)"]
         CSVExport["Client-Side CSV Exporter"]
     end
 
@@ -167,10 +165,20 @@ graph TB
     end
 
     Browser --> SPA
-    SPA --> KPICards & LineChart & BarChart & AuditTable & CutoffControl & CSVExport
+    SPA --> KPICards
+    SPA --> LineChart
+    SPA --> BarChart
+    SPA --> AuditTable
+    SPA --> CutoffControl
+    SPA --> CSVExport
     SPA -->|HTTPS REST JSON| FastAPIApp
-    FastAPIApp --> RouterHealth & RouterForecasts & RouterAccuracy & RouterQuality
-    RouterForecasts & RouterAccuracy & RouterQuality --> DataService
+    FastAPIApp --> RouterHealth
+    FastAPIApp --> RouterForecasts
+    FastAPIApp --> RouterAccuracy
+    FastAPIApp --> RouterQuality
+    RouterForecasts --> DataService
+    RouterAccuracy --> DataService
+    RouterQuality --> DataService
     DataService --> SelectionService
     DataService --> AlignmentService
     DataService --> MetricsService
@@ -198,7 +206,7 @@ sequenceDiagram
 
     Analyst->>UI: Selects January 1–7, 2026 & Cutoff (11:00 UTC D-1)
     UI->>API: GET /api/forecasts?date_from=2026-01-01&date_to=2026-01-07&cutoff_hour=11
-    API->>Svc: get_reconciled_forecasts(date_from, date_to, cutoff_hour)
+    API->>Svc: get_forecast_actuals(date_from, date_to, cutoff_hour)
     
     par Stream Ingestion
         Svc->>BMRS: GET /datasets/WINDFOR/stream (Forecast Runs)
@@ -266,49 +274,51 @@ Evaluated strictly over $N$ matched delivery intervals ($N = \text{matched\_pair
 | **Mean Directional Bias** | $\frac{1}{N} \sum_{i=1}^{N} e_i$ | **+1,983.70 MW** | **+3,185.54 MW** | Quantifies structural overforecast bias. Note: $\text{MAE} \equiv \text{Bias}$ for Jan 1–3 because all 72 errors $e_i > 0$. |
 | **Interval Coverage** | $\frac{N}{\text{Expected Intervals}} \times 100\%$ | **100.0%** (168/168) | **100.0%** (72/72) | Confirms zero missing data across the evaluation window. |
 
-> **Note on MAPE Exclusion**: Mean Absolute Percentage Error (MAPE) is intentionally excluded because low-wind denominator intervals near zero create infinite mathematical distortions.
+> **Audit Note on January 1–3, 2026 Mathematical Identity**:
+> For the January 1–3, 2026 period, WindLens computes $\text{MAE} = 3,185.54\text{ MW}$ and $\text{Mean Bias} = +3,185.54\text{ MW}$. An exhaustive inspection of all 72 hourly records confirms that every single hour experienced $e_i > 0$ (forecast strictly exceeded actual, ranging from $+295.5$ MW to $+5,651.5$ MW). Because $|e_i| \equiv e_i$ when $e_i > 0$, $\text{MAE} \equiv \text{Bias}$ is an exact mathematical property of the market outturn, not a software bug.
+>
+> **Exclusion of MAPE**: Mean Absolute Percentage Error (MAPE) is excluded because near-zero wind outturn creates mathematical division distortions.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Version | Purpose | Implementation File |
+| Layer | Technology | Verified Version | Purpose | Implementation File |
 |---|---|---|---|---|
 | **Frontend Framework** | React | `^19.3.1` | Declarative UI state tree & interactive views | [frontend/src/App.tsx](frontend/src/App.tsx) |
-| **Build Tool** | Vite | `^8.3.5` | Fast HMR development server & production build | [frontend/vite.config.ts](frontend/vite.config.ts) |
-| **Language (FE)** | TypeScript | `~5.9.3` | Strict compile-time type safety | [frontend/src/types/index.ts](frontend/src/types/index.ts) |
+| **Build Tool** | Vite | `^8.3.5` | Fast HMR development server & production bundler | [frontend/vite.config.ts](frontend/vite.config.ts) |
+| **Language (FE)** | TypeScript | `~7.0.2` | Strict compile-time type safety | [frontend/src/types/index.ts](frontend/src/types/index.ts) |
 | **Styling** | Tailwind CSS | `^4.3.3` | Editorial light analytical design tokens | [frontend/src/index.css](frontend/src/index.css) |
 | **Charts** | Recharts | `^3.10.1` | Interactive SVG time-series & residual charts | [frontend/src/components/](frontend/src/components/) |
-| **Icons** | Lucide React | `^1.16.0` | Minimal analytical iconography | [frontend/src/components/](frontend/src/components/) |
 | **Backend Framework** | FastAPI | `>=0.115.6` | Asynchronous high-performance REST API | [backend/app/main.py](backend/app/main.py) |
-| **Language (BE)** | Python | `3.11-slim` | Production container base image | [backend/Dockerfile](backend/Dockerfile) |
+| **Language (BE)** | Python | `3.11-slim` / `3.13` | Production container base image & local runtime | [backend/Dockerfile](backend/Dockerfile) |
 | **Data Validation** | Pydantic v2 | `>=2.11.0` | Strict schema validation & OpenAPI docs | [backend/app/schemas.py](backend/app/schemas.py) |
 | **HTTP Client** | HTTPX | `>=0.28.0` | Asynchronous streaming client for Elexon BMRS | [backend/app/clients/elexon.py](backend/app/clients/elexon.py) |
-| **ASGI Server** | Uvicorn | `>=0.34.0` | Production ASGI web application server | [backend/app/main.py](backend/app/main.py) |
-| **Test Runner** | Pytest | `>=8.3.0` | Unit, property, and regression test suite | [backend/tests/](backend/tests/) |
-| **Container Engine** | Docker Compose | `v2+` | Multi-container local orchestration | [docker-compose.yml](docker-compose.yml) |
+| **ASGI Server** | Uvicorn | `>=0.32.1` | Production ASGI web application server | [backend/app/main.py](backend/app/main.py) |
+| **Test Runner** | Pytest | `>=8.3.4` | Unit, property, and regression test suite | [backend/tests/](backend/tests/) |
+| **Container Engine** | Docker Compose | `v2+` (Compose 3.8) | Multi-container local orchestration | [docker-compose.yml](docker-compose.yml) |
 | **Reverse Proxy** | Nginx | `alpine` | Static asset serving & SPA client routing | [frontend/nginx.conf](frontend/nginx.conf) |
 
 ---
 
 ## 📂 Repository Structure
 
+The repository structure reflects the verified filesystem layout:
+
 ```
 windlens/
-├── .dockerignore
 ├── .env.example                     # Environment template with verified safe defaults
 ├── .gitignore                       # Strict Git ignore (blocks .env, caches, LaTeX, private files)
 ├── README.md                        # Master production README
 ├── docker-compose.yml               # Multi-container orchestration (FastAPI + Nginx React)
 ├── render.yaml                      # Render Blueprint cloud deployment configuration
-├── vercel.json                      # Vercel Edge configuration with SPA client routing
 ├── backend/
 │   ├── Dockerfile                   # Single-stage python:3.11-slim container with layer caching
 │   ├── requirements.txt             # Pinned backend dependencies
 │   ├── app/
 │   │   ├── __init__.py
 │   │   ├── config.py                # Environment configuration & default cutoff settings
-│   │   ├── main.py                  # FastAPI app factory, CORS, and routing mount
+│   │   ├── main.py                  # FastAPI app factory, CORS, and /health route
 │   │   ├── schemas.py               # Strict Pydantic v2 data models & validation rules
 │   │   ├── clients/
 │   │   │   ├── __init__.py
@@ -341,22 +351,19 @@ windlens/
     ├── package.json                 # React 19, Vite, Tailwind CSS, Recharts dependencies
     ├── package-lock.json
     ├── tsconfig.json                # Strict TypeScript compiler options
+    ├── vercel.json                  # Vercel Edge configuration with SPA client routing
     ├── vite.config.ts               # Vite build configuration with development API proxy
     └── src/
-        ├── App.tsx                  # Root analytical dashboard component & state orchestration
+        ├── App.tsx                  # Root dashboard component, state, cutoff controls & modal
         ├── index.css                # Tailwind CSS v4 design tokens & styling
         ├── main.tsx                 # React DOM mount entry point
         ├── api/
         │   └── client.ts            # Typed HTTP client with URI sanitization
         ├── components/
-        │   ├── CutoffSelector.tsx   # Configurable decision cutoff dropdown
-        │   ├── DataBanner.tsx       # Live BMRS provenance & freshness banner
         │   ├── ErrorChart.tsx       # Hourly forecast error deviation bar chart
         │   ├── ForecastChart.tsx    # Dual-series forecast vs actual line chart
         │   ├── IntervalTable.tsx    # Sortable/filterable reconciliation audit table
-        │   ├── KpiStrip.tsx         # Executive KPI summary cards with risk badges
-        │   ├── LoadingStates.tsx    # Skeleton loaders, error alerts, empty states
-        │   └── MethodologyAuditModal.tsx # In-app algorithmic derivation audit modal
+        │   └── KpiStrip.tsx         # Executive KPI summary cards with risk badges
         ├── lib/
         │   └── formatters.ts        # UTC formatting, number precision, CSV exporter
         └── types/
@@ -385,13 +392,15 @@ curl -s "https://windlens-backend-5xda.onrender.com/health"
 ### 2. `GET /api/forecasts`
 Retrieves reconciled hourly intervals (forecast vs actual) for a delivery date range:
 * **Query Parameters**:
-  * `date_from` (string, required): Start delivery date `YYYY-MM-DD` (January 2026).
-  * `date_to` (string, required): End delivery date `YYYY-MM-DD`.
-  * `cutoff_hour` (int, optional, default: 11): D-1 decision cutoff hour in UTC (0–23).
+  * `date_from` (string, optional, default: `2026-01-01`): Start delivery date `YYYY-MM-DD` within January 2026.
+  * `date_to` (string, optional, default: `2026-01-07`): End delivery date `YYYY-MM-DD` (must be $\ge$ `date_from`).
+  * `cutoff_hour` (int, optional, range: `0–23`): D-1 decision cutoff hour in UTC. Defaults to `11`.
+* **Validation Errors**: Returns `422 Unprocessable Entity` if dates fall outside January 2026 or `date_from > date_to`.
+
 ```bash
 curl -s "https://windlens-backend-5xda.onrender.com/api/forecasts?date_from=2026-01-01&date_to=2026-01-01&cutoff_hour=11"
 ```
-**Response (200 OK)**:
+**Sample Response Item (200 OK)**:
 ```json
 [
   {
@@ -407,18 +416,18 @@ curl -s "https://windlens-backend-5xda.onrender.com/api/forecasts?date_from=2026
 ```
 
 ### 3. `GET /api/accuracy`
-Computes statistical accuracy metrics over the reconciled delivery hours:
+Computes summary accuracy metrics over all matched delivery intervals:
 ```bash
-curl -s "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-01-01&date_to=2026-01-07&cutoff_hour=11"
+curl -s "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-01-01&date_to=2026-01-03&cutoff_hour=11"
 ```
 **Response (200 OK)**:
 ```json
 {
-  "mae_mw": 2154.35,
-  "rmse_mw": 2590.12,
-  "bias_mw": 1983.7,
-  "matched_pairs": 168,
-  "expected_intervals": 168,
+  "mae_mw": 3185.54,
+  "rmse_mw": 3420.67,
+  "bias_mw": 3185.54,
+  "matched_pairs": 72,
+  "expected_intervals": 72,
   "coverage_pct": 100.0
 }
 ```
@@ -451,9 +460,9 @@ curl -s "https://windlens-backend-5xda.onrender.com/api/data-quality?date_from=2
 ## 💻 Local Development & Quickstart
 
 ### Prerequisites
-* **Python 3.11+**
+* **Python 3.11+** (tested on 3.11 and 3.13)
 * **Node.js 20+** and **npm**
-* **Docker & Docker Compose** (optional, for containerized run)
+* **Docker & Docker Compose** (optional, for containerized local execution)
 
 ### Option A: Local Docker Compose (Fastest)
 ```bash
@@ -473,34 +482,35 @@ docker compose up --build
 
 ### Option B: Native Development
 
-#### 1. Start Backend
+#### 1. Backend Setup
 ```bash
 cd backend
 python -m venv .venv
 
-# On Windows:
-.\.venv\Scripts\activate
-# On Linux / macOS:
+# Activate virtual environment:
+# Windows (PowerShell):
+.\.venv\Scripts\Activate.ps1
+# Linux / macOS:
 source .venv/bin/activate
 
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### 2. Start Frontend
-In a new terminal window:
+#### 2. Frontend Setup
+In a new terminal:
 ```bash
 cd frontend
 npm install
 npm run dev -- --host 127.0.0.1 --port 3000
 ```
-Open [http://localhost:3000](http://localhost:3000) in your web browser.
+Open [http://localhost:3000](http://localhost:3000) in your web browser. In local development, the Vite dev server automatically proxies `/api` and `/health` requests to `http://localhost:8000`.
 
 ---
 
 ## 🧪 Quality Assurance & Testing
 
-### 1. Automated Unit & Regression Tests (Pytest)
+### 1. Automated Backend Test Suite (Pytest)
 Run the full test suite in `backend/`:
 ```bash
 cd backend
@@ -511,45 +521,46 @@ pytest tests/ -v
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.13.13, pytest-9.2.0, pluggy-1.7.0
+plugins: anyio-4.15.1, asyncio-1.4.1
 collected 35 items
 
-tests/test_alignment.py::TestAggregateToHourly::test_sp1_sp2_averaged_correctly PASSED [  2%]
-tests/test_alignment.py::TestAggregateToHourly::test_sp3_sp4_averaged_correctly PASSED [  5%]
-tests/test_alignment.py::TestAggregateToHourly::test_partial_flag_when_only_one_sp PASSED [  8%]
-tests/test_alignment.py::TestAggregateToHourly::test_empty_input_returns_empty PASSED [ 11%]
-tests/test_alignment.py::TestAggregateToHourly::test_missing_generation_field_skipped PASSED [ 14%]
-tests/test_alignment.py::TestAggregateToHourly::test_two_hours_produce_two_entries PASSED [ 17%]
-tests/test_alignment.py::TestAggregateToHourly::test_duplicate_settlement_period_deduplicated PASSED [ 20%]
-tests/test_api.py::test_health_endpoint PASSED                           [ 22%]
-tests/test_api.py::test_forecasts_endpoint_valid_range PASSED            [ 25%]
-tests/test_api.py::test_forecasts_endpoint_out_of_scope_rejected PASSED  [ 28%]
-tests/test_api.py::test_forecasts_endpoint_reversed_dates_rejected PASSED [ 31%]
-tests/test_api.py::test_accuracy_endpoint_valid PASSED                   [ 34%]
-tests/test_api.py::test_data_quality_endpoint_valid PASSED               [ 37%]
-tests/test_api.py::test_cutoff_hour_parameter_accepted PASSED            [ 40%]
-tests/test_api.py::test_data_quality_provenance_isolation PASSED         [ 42%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_standard_case PASSED [ 45%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_positive_bias PASSED [ 48%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_negative_bias PASSED [ 51%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_perfect_forecast PASSED [ 54%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_empty_pairs_raises_value_error PASSED [ 57%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_coverage_below_100 PASSED [ 60%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_rmse_greater_than_or_equal_mae PASSED [ 62%]
-tests/test_metrics.py::TestComputeAccuracyMetrics::test_error_convention_forecast_minus_actual PASSED [ 65%]
-tests/test_selection.py::TestBuildCutoffDatetime::test_default_cutoff_11_utc PASSED [ 68%]
-tests/test_selection.py::TestBuildCutoffDatetime::test_cutoff_day_is_day_before_delivery PASSED [ 71%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_11_selects_0930_run PASSED [ 74%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_1130_excluded_exactly_at_cutoff PASSED [ 77%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_12_selects_1130_run PASSED [ 80%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_16_selects_1530_run PASSED [ 82%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_no_run_before_cutoff_returns_none PASSED [ 85%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_empty_records_returns_none PASSED [ 88%]
-tests/test_selection.py::TestSelectDayAheadForecastRun::test_post_cutoff_runs_excluded PASSED [ 91%]
-tests/test_selection.py::TestExtractHourlyForecasts::test_extracts_correct_delivery_hours PASSED [ 94%]
-tests/test_selection.py::TestExtractHourlyForecasts::test_does_not_include_wrong_delivery_date PASSED [ 97%]
-tests/test_selection.py::TestExtractHourlyForecasts::test_does_not_include_wrong_run PASSED [100%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_sp1_sp2_averaged_correctly PASSED [  2%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_sp3_sp4_averaged_correctly PASSED [  5%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_partial_flag_when_only_one_sp PASSED [  8%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_empty_input_returns_empty PASSED [ 11%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_missing_generation_field_skipped PASSED [ 14%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_two_hours_produce_two_entries PASSED [ 17%]
+backend/tests/test_alignment.py::TestAggregateToHourly::test_duplicate_settlement_period_deduplicated PASSED [ 20%]
+backend/tests/test_api.py::test_health_endpoint PASSED                           [ 22%]
+backend/tests/test_api.py::test_forecasts_endpoint_valid_range PASSED            [ 25%]
+backend/tests/test_api.py::test_forecasts_endpoint_out_of_scope_rejected PASSED  [ 28%]
+backend/tests/test_api.py::test_forecasts_endpoint_reversed_dates_rejected PASSED [ 31%]
+backend/tests/test_api.py::test_accuracy_endpoint_valid PASSED                   [ 34%]
+backend/tests/test_api.py::test_data_quality_endpoint_valid PASSED               [ 37%]
+backend/tests/test_api.py::test_cutoff_hour_parameter_accepted PASSED            [ 40%]
+backend/tests/test_api.py::test_data_quality_provenance_isolation PASSED         [ 42%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_standard_case PASSED [ 45%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_positive_bias PASSED [ 48%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_negative_bias PASSED [ 51%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_perfect_forecast PASSED [ 54%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_empty_pairs_raises_value_error PASSED [ 57%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_coverage_below_100 PASSED [ 60%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_rmse_greater_than_or_equal_mae PASSED [ 62%]
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics::test_error_convention_forecast_minus_actual PASSED [ 65%]
+backend/tests/test_selection.py::TestBuildCutoffDatetime::test_default_cutoff_11_utc PASSED [ 68%]
+backend/tests/test_selection.py::TestBuildCutoffDatetime::test_cutoff_day_is_day_before_delivery PASSED [ 71%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_11_selects_0930_run PASSED [ 74%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_1130_excluded_exactly_at_cutoff PASSED [ 77%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_12_selects_1130_run PASSED [ 80%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_cutoff_16_selects_1530_run PASSED [ 82%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_no_run_before_cutoff_returns_none PASSED [ 85%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_empty_records_returns_none PASSED [ 88%]
+backend/tests/test_selection.py::TestSelectDayAheadForecastRun::test_post_cutoff_runs_excluded PASSED [ 91%]
+backend/tests/test_selection.py::TestExtractHourlyForecasts::test_extracts_correct_delivery_hours PASSED [ 94%]
+backend/tests/test_selection.py::TestExtractHourlyForecasts::test_does_not_include_wrong_delivery_date PASSED [ 97%]
+backend/tests/test_selection.py::TestExtractHourlyForecasts::test_does_not_include_wrong_run PASSED [100%]
 
-======================== 35 passed, 1 warning in 3.80s ========================
+======================== 35 passed, 1 warning in 4.95s ========================
 ```
 
 ### 2. Frontend Strict TypeScript Build Verification
@@ -557,14 +568,29 @@ tests/test_selection.py::TestExtractHourlyForecasts::test_does_not_include_wrong
 cd frontend
 npm run build
 ```
-**Result**: Clean compilation (`tsc -b && vite build`) transforming 598 modules into minified assets in under 2 seconds with **zero TypeScript errors**.
+**Build Output**:
+```
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 598 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   1.01 kB │ gzip:   0.54 kB
+dist/assets/index-BYMPPIF3.css   31.97 kB │ gzip:   6.53 kB
+dist/assets/index-BBcLhErE.js   654.41 kB │ gzip: 190.10 kB
+✓ built in 3.03s
+```
+Clean compilation with **zero TypeScript compile errors**.
 
 ---
 
 ## ⚠️ Operational Boundaries & Limitations
 
-1. **Render Free Tier Standby**: The backend container automatically enters standby after 15 minutes of inactivity. Initial wake-up latency is ~30–45 seconds.
-2. **Upstream BMRS Dependency**: Analytics depend on official Elexon BMRS API uptime. If the upstream service experiences downtime, WindLens surfaces graceful error notifications rather than serving stale mocks.
+1. **Render Free Tier Standby**: The backend container automatically enters standby after 15 minutes of inactivity. Initial wake-up latency requires ~30–45 seconds before normal response times resume.
+2. **Upstream BMRS Dependency**: Analytics depend on official Elexon BMRS API availability. If the upstream service experiences downtime, WindLens surfaces graceful error notifications rather than serving stale mocks.
 3. **Gate Closure Proxy**: 11:00 UTC D-1 is a configurable pre-noon gate closure proxy. Power exchange auction gates vary across EPEX SPOT and Nord Pool.
 4. **Historical Scope**: Focused strictly on January 2026 national-level data as mandated by the Gridbricks hiring specification.
 5. **National Transmission Focus**: Reflects transmission-connected aggregate GB generation; does not account for embedded distribution-connected solar or local microgeneration.
