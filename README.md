@@ -78,7 +78,7 @@ Procurement analysts face two critical operational questions before committing c
 
 ## 3. Dashboard Preview & Visual Interface
 
-Below is an authentic screenshot of the production WindLens dashboard loaded with live Elexon BMRS data for **January 1–7, 2026** (Week 1, Storm Henk period):
+Below is an authentic screenshot of the production WindLens dashboard loaded with live Elexon BMRS data for **January 1–7, 2026** (Week 1):
 
 ![WindLens Dashboard Preview](docs/images/windlens-dashboard.png)
 
@@ -86,7 +86,7 @@ Below is an authentic screenshot of the production WindLens dashboard loaded wit
 1. **Executive KPI Strip**:
    - **Mean Absolute Error (MAE)**: Displays average absolute deviation magnitude in megawatts (e.g., `2,154 MW` for Week 1).
    - **Root Mean Squared Error (RMSE)**: Penalises large forecast misses, highlighting reserve capacity stress (`2,590 MW`).
-   - **Mean Directional Bias**: Quantifies structural overforecasting or underforecasting (`+1,984 MW` with amber `Overforecast (Net Long Risk)` badge).
+   - **Mean Directional Bias**: Quantifies structural overforecasting or underforecasting (`+1,984 MW`, indicating persistent positive forecast bias where forecasts systematically exceeded outturn).
    - **Interval Coverage**: Displays matched pairs against expected clock hours (`100.0%` — `168 / 168 hrs`).
 2. **Day-Ahead Forecast vs Metered Outturn Line Chart**: Dual-series interactive line chart rendered via Recharts, mapping hourly forecast generation (blue) against metered outturn (green) with precision tooltips.
 3. **Hourly Forecast Deviation Residual Chart**: Diverging bar chart showing signed error ($e_i = f_i - a_i$). Amber bars represent overforecasting; teal bars represent underforecasting.
@@ -347,8 +347,15 @@ $$\text{Hourly Actual Outturn (MW)} = \frac{\text{SP}_{2h+1} + \text{SP}_{2h+2}}
 All errors are calculated in megawatts (MW) using the established industry convention:
 $$\text{Error}_i = \text{Forecast}_i - \text{Actual}_i$$
 
-- **Positive Error ($e_i > 0$)**: Indicates **Overforecasting**. The forecast overestimated wind generation. A utility relying on this forecast would have purchased too little alternative generation or sold excess energy, resulting in a **Net Long / Short Physical Balance** exposure.
-- **Negative Error ($e_i < 0$)**: Indicates **Underforecasting**. The utility would have over-procured conventional generation, leaving it in a **Net Short / Long Physical Balance** position.
+- **Positive Error ($e_i > 0$) — Overforecasting**:
+  Day-ahead forecast exceeded actual metered generation ($\text{Forecast} > \text{Actual}$).
+  - *Physical Outturn Implication*: Realized physical wind production was lower than the day-ahead projection.
+  - *Procurement / Balancing Context*: If a market participant committed contracts or scheduled physical generation based directly on the higher forecast, actual delivered volume fell short of the contracted position. In real-time settlement, this physical deficit must be balanced by the system operator, exposing the participant to imbalance settlement cash-out charges (typically at the System Buy Price), unless offset by other flexible portfolio assets.
+- **Negative Error ($e_i < 0$) — Underforecasting**:
+  Day-ahead forecast was lower than actual metered generation ($\text{Forecast} < \text{Actual}$).
+  - *Physical Outturn Implication*: Realized physical wind production was higher than the day-ahead projection.
+  - *Procurement / Balancing Context*: If procurement or generation dispatch was scheduled assuming lower wind availability, the physical asset delivered unexpected surplus volume into the grid. In imbalance settlement, this uncontracted surplus is credited at the System Sell Price.
+- *Methodology Note*: WindLens provides ex-post statistical tracking of forecast deviation. It avoids blanket trading assumptions, as real-time financial impact depends on an entity's specific portfolio position (renewable generator vs retail supplier vs offtaker), hedging strategy, and prevailing cash-out prices.
 
 ### Statistical Formulations
 
@@ -371,7 +378,7 @@ An empirical audit of all 72 individual settlement hours confirmed:
 - Minimum error: $+295.50$ MW (Jan 2 06:00 UTC); Maximum error: $+5,651.50$ MW (Jan 1 00:00 UTC).
 - Count of negative errors: exactly $0$.
 $$\sum_{i=1}^{72} |e_i| \equiv \sum_{i=1}^{72} e_i = 229,359.00\text{ MW} \implies \text{MAE} \equiv \text{Mean Bias}$$
-This proved that the identical metrics are an authentic mathematical identity of Storm Henk's sustained wind overforecasting, not an application defect. When evaluating Week 2 (Jan 8–14), negative errors occur and the metrics diverge ($\text{MAE} = 2,293.13$ MW, $\text{Mean Bias} = +1,632.81$ MW).
+This proved that the identical metrics are an authentic mathematical identity resulting from continuous wind overforecasting across all 72 consecutive hours during this January period, not an application defect. When evaluating Week 2 (Jan 8–14), negative errors occur and the metrics diverge ($\text{MAE} = 2,293.13$ MW, $\text{Mean Bias} = +1,632.81$ MW).
 
 ---
 
@@ -410,8 +417,8 @@ curl -i "https://windlens-backend-5xda.onrender.com/api/forecasts?date_from=2026
     "delivery_hour": "2026-01-01T00:00:00Z",
     "forecast_mw": 19466.0,
     "actual_mw": 13814.5,
-    "delta_mw": 5651.5,
-    "forecast_published_at": "2025-12-31T09:30:00Z",
+    "error_mw": 5651.5,
+    "publish_time": "2025-12-31T09:30:00Z",
     "lead_time_hours": 14.5,
     "actual_partial": false
   }
@@ -431,9 +438,7 @@ curl -i "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-
   "bias_mw": 3185.54,
   "matched_pairs": 72,
   "expected_intervals": 72,
-  "coverage_pct": 100.0,
-  "unit": "MW",
-  "error_convention": "forecast_mw - actual_mw"
+  "coverage_pct": 100.0
 }
 ```
 
@@ -446,14 +451,17 @@ curl -i "https://windlens-backend-5xda.onrender.com/api/data-quality?date_from=2
 ```json
 {
   "source": "live_elexon",
-  "source_description": "Live Elexon BMRS streaming API (FUELHH & WINDFOR datasets)",
+  "last_fetched_utc": "2026-10-28T19:36:25.662546Z",
+  "date_from": "2026-01-01",
+  "date_to": "2026-01-03",
+  "cutoff_hour_utc": 11,
   "total_delivery_hours": 72,
+  "forecast_available": 72,
+  "actual_available": 72,
   "matched_pairs": 72,
-  "missing_forecast": 0,
-  "missing_actual": 0,
-  "partial_actual": 0,
-  "coverage_pct": 100.0,
-  "last_fetched_utc": "2026-10-28T19:24:40.123456Z"
+  "partial_actual_count": 0,
+  "missing_forecast_count": 0,
+  "missing_actual_count": 0
 }
 ```
 
@@ -524,7 +532,7 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser.
 ## 14. Docker & Containerization
 
 ### Backend Dockerfile (`backend/Dockerfile`)
-Built on `python:3.11-slim` with multi-stage layer caching:
+Single-stage production container based on `python:3.11-slim` with dependency layer caching (`requirements.txt` installed prior to application code copy):
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
@@ -658,7 +666,7 @@ In compliance with the Gridbricks Full-Stack SWE Challenge requirements, this ap
 - **Human-Engineered & Architecturally Audited**:
   - Formulation of the zero look-ahead decision cutoff inequality (`publishTime < cutoff_datetime`).
   - Mathematical derivation and empirical validation of the $(\text{SP}_1 + \text{SP}_2)/2$ settlement outturn averaging formula.
-  - Verification of the Storm Henk January 1–3, 2026 mathematical identity ($\text{MAE} \equiv \text{Mean Bias}$).
+  - Verification of the January 1–3, 2026 mathematical identity ($\text{MAE} \equiv \text{Mean Bias}$) from live Elexon data.
   - Investigation of Elexon BMRS streaming query semantics, date parameter offsets, and payload filtering.
   - Request-scoped provenance isolation architecture preventing cross-request cache leakage.
 

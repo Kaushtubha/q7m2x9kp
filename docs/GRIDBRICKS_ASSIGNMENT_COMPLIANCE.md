@@ -2,7 +2,8 @@
 
 **Evaluation Date**: October 29, 2026  
 **Repository**: [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp)  
-**Git Commit**: `13e321943c7bfe8bafeea08e28063259b3be5d8e`  
+**Functional Implementation Baseline**: `13e321943c7bfe8bafeea08e28063259b3be5d8e` (core code, tests, and deployments)  
+**Audit Evaluation Baseline**: Commit `cce839d73ff0906b314f0e95fa5bf1afb83474e9`  
 **Production Frontend**: [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/)  
 **Production Backend**: [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com)  
 
@@ -10,17 +11,21 @@
 
 ## 1. Compliance Summary & Status Counts
 
-This matrix evaluates the WindLens application directly against the authoritative Gridbricks Full-Stack Software Engineering Challenge specification extracted from the foundational project master prompt. Every requirement is mapped to concrete codebase evidence, deterministic test executions, or live deployment verification.
+> **Traceability & Scope Disclosure**: The requirements below were extracted directly from the candidate hiring challenge master prompt and project specification provided at the start of development (the standalone original PDF/DOCX was not provided as a discrete repository file). To maintain strict evaluative integrity, requirements are grouped into:
+> - **Explicit Assignment Requirements**: Core functional and deliverable mandates specified by Gridbricks (React frontend, Python backend, FUELHH actuals, WINDFOR forecasts, January 2026 scope, Docker, public cloud deployment, anonymous repo, README with startup & deployment & AI disclosure, unlisted YouTube video).
+> - **Project Implementation Assumptions**: Analytical design choices introduced to make the pipeline concrete (11:00 UTC D-1 decision cutoff assumption approximating pre-noon gate closure, half-hourly $(\text{SP}_1 + \text{SP}_2)/2$ instantaneous power averaging, intentional omission of MAPE to avoid zero-denominator distortion). These assumptions are clearly labeled as engineering design choices, not official statutory market rules.
 
-| Status Category | Count | Definition |
-|---|:---:|---|
-| **COMPLETE** | **15** | Implementation verified with passing automated tests and live deployment probes. |
-| **PARTIALLY COMPLETE** | **1** | Implementation verified; secondary operational recommendation noted (CORS origin hardening). |
-| **IMPLEMENTED, NOT VERIFIED** | **0** | All existing code features have been directly tested and verified. |
-| **NOT IMPLEMENTED** | **0** | No core functional requirements omitted. |
-| **BLOCKED** | **1** | External candidate action required: recording and linking the unlisted YouTube video. |
-| **NOT APPLICABLE** | **0** | All 17 requirements are applicable to this assessment. |
-| **TOTAL REQUIREMENTS** | **17** | **100% of functional engineering requirements are complete.** |
+### Status Counts & Submission Readiness Breakdown
+
+| Status Category | Count | Proportion | Definition |
+|---|:---:|:---:|---|
+| **COMPLETE** | **15** | 88.2% | Implementation verified with passing automated tests, clean builds, and live deployment probes. |
+| **PARTIALLY COMPLETE** | **1** | 5.9% | Implementation verified; secondary operational recommendation noted (CORS origin hardening). |
+| **IMPLEMENTED, NOT VERIFIED** | **0** | 0.0% | All existing code features have been directly tested and verified. |
+| **NOT IMPLEMENTED** | **0** | 0.0% | No core functional requirements omitted. |
+| **BLOCKED** | **1** | 5.9% | External candidate action required: recording and linking the unlisted YouTube walkthrough video. |
+| **NOT APPLICABLE** | **0** | 0.0% | All 17 requirements are applicable to this assessment. |
+| **TOTAL DELIVERABLES** | **17** | 100.0% | **Overall Status**: 15/17 Complete (88.2%). Functional software is operational; full submission requires video link. |
 
 ---
 
@@ -33,7 +38,7 @@ This matrix evaluates the WindLens application directly against the authoritativ
 | **R-03** | **Quantitative Accuracy Analysis**: Compute MAE, RMSE, Mean Bias, Matched-Pair Coverage (%), error time-series, and hourly residual chart (`forecast - actual`). | **COMPLETE** | [backend/app/services/metrics.py](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/metrics.py), [frontend/src/components/KpiStrip.tsx](file:///c:/Users/kaush/OneDrive/Desktop/windlens/frontend/src/components/KpiStrip.tsx), [frontend/src/components/ErrorChart.tsx](file:///c:/Users/kaush/OneDrive/Desktop/windlens/frontend/src/components/ErrorChart.tsx). Unit tests `test_metrics.py` (8/8 pass). Live API `/api/accuracy` returns exact metrics. | None. Verified in test suite and live probes. | Re-run Week 1 vs Week 2 in UI to demonstrate how residual distributions diverge under different meteorological regimes. |
 | **R-04** | **Decision-Time Forecast Selection**: Enforce strict day-ahead publication cutoff (`publishTime < cutoff`), eliminate look-ahead bias, make cutoff configurable, and handle UTC/UK timezones. | **COMPLETE** | [backend/app/services/selection.py](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/selection.py), [frontend/src/components/CutoffSelector.tsx](file:///c:/Users/kaush/OneDrive/Desktop/windlens/frontend/src/components/CutoffSelector.tsx). Unit tests `test_selection.py` (12/12 pass). Enforces strict `<` inequality; excludes runs released at or after cutoff. Configurable cutoff (09:30, 11:00, 11:30, 15:30 UTC D-1) in UI and API. | None. Explicitly labeled as a configurable assumption, not an official rule. | Highlight the zero look-ahead unit tests during the technical interview. |
 | **R-05** | **Actual Outturn Aggregation (HH to Hourly)**: Aggregate 30-min FUELHH settlement periods to clock-hour actuals via $(\text{SP}_1 + \text{SP}_2)/2$, handle duplicates, and flag partial intervals. | **COMPLETE** | [backend/app/services/alignment.py](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/alignment.py). Unit tests `test_alignment.py` (7/7 pass). Averages SP1 and SP2 instantaneous MW, deduplicates identical settlement slots, flags `actual_partial: true` if only 1 SP exists. | None. Zero synthetic interpolation. | Maintain the `actual_partial` indicator when ingesting incomplete real-time settlement feeds. |
-| **R-06** | **Error Conventions & Dimensional Rigor**: Use consistent MW units, define `Error = Forecast - Actual`, and omit percentage metrics (MAPE) to prevent division-by-zero distortions. | **COMPLETE** | [backend/app/services/metrics.py:L14-L44](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/metrics.py#L14-L44), [README.md:L91-L108](file:///c:/Users/kaush/OneDrive/Desktop/windlens/README.md#L91-L108). All units strictly in MW. Positive error = overforecasting (net long risk); negative = underforecasting (net short risk). MAPE is completely excluded from the codebase. | None. Methodological justification verified. | Explain the mathematical rationale for omitting MAPE during the candidate interview. |
+| **R-06** | **Error Conventions & Dimensional Rigor**: Use consistent MW units, define `Error = Forecast - Actual`, and omit percentage metrics (MAPE) to prevent division-by-zero distortions. | **COMPLETE** | [backend/app/services/metrics.py:L14-L44](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/metrics.py#L14-L44), [README.md: Section 10](file:///c:/Users/kaush/OneDrive/Desktop/windlens/README.md). All units strictly in MW. Positive error = overforecasting (forecast > actual, leading to physical volume shortfall relative to contract); negative error = underforecasting (forecast < actual, leading to physical volume surplus). MAPE is completely excluded from the codebase. | None. Methodological justification verified. | Explain the mathematical rationale for omitting MAPE during the candidate interview. |
 | **R-07** | **Authoritative Data Sources**: Integrate Elexon BMRS `FUELHH/stream` (wind actuals) and `WINDFOR/stream` (day-ahead forecasts) for January 2026. Do not introduce unauthorized third-party datasets. | **COMPLETE** | [backend/app/clients/elexon.py](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/clients/elexon.py). Queries official BMRS streaming endpoints with client-side `fuelType=WIND` filtering and target date isolation. Verified working across all 31 days of January 2026. | None. Zero third-party weather or synthetic datasets used. | In production, keep query windows chunked by day to respect BMRS stream buffer limits. |
 | **R-08** | **Data Quality, Provenance & Reliability**: Provide explicit data quality indicators, distinguish live Elexon data from fixtures, handle missing records, and eliminate cache leakage. | **COMPLETE** | [backend/app/services/data_service.py](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/services/data_service.py), [backend/app/routers/api.py:L70-L84](file:///c:/Users/kaush/OneDrive/Desktop/windlens/backend/app/routers/api.py#L70-L84). Endpoint `/api/data-quality` returns `source: "live_elexon"`, `matched_pairs`, `missing`, and `partial`. Provenance isolation test `test_data_quality_provenance_isolation` passes. | None. Request-scoped architecture verified. | Keep `USE_FIXTURES=false` in production deployment environment variables. |
 | **R-09** | **React Frontend Application**: Build a modern, responsive single-page dashboard using React, TypeScript, Vite, Tailwind CSS, and Recharts. | **COMPLETE** | [frontend/package.json](file:///c:/Users/kaush/OneDrive/Desktop/windlens/frontend/package.json), [frontend/src/App.tsx](file:///c:/Users/kaush/OneDrive/Desktop/windlens/frontend/src/App.tsx). React 19.3.1, Vite 8.3.5, Tailwind CSS 4.3.3, Recharts 3.10.1. Production build (`npm run build`) bundles 598 modules with 0 errors. | None. Live on Vercel edge CDN. | Retain editorial light theme and semantic risk color coding. |
@@ -83,7 +88,7 @@ This matrix evaluates the WindLens application directly against the authoritativ
   - Because every hourly error was strictly positive:
     $$\sum_{i=1}^{72} |e_i| \equiv \sum_{i=1}^{72} e_i = 229,359.00\text{ MW}$$
     $$\text{MAE} \equiv \text{Mean Directional Bias} = \frac{229,359.00}{72} = 3,185.54\text{ MW}$$
-  - **Significance**: Confirmed that identical MAE and Bias is an authentic meteorological property of Storm Henk's wind overforecasting, proving mathematical integrity.
+  - **Significance**: Confirmed that identical MAE and Bias is an authentic mathematical identity resulting from continuous positive forecast deviations across all 72 intervals in this January 1–3, 2026 dataset, proving mathematical integrity.
 
 ---
 
@@ -92,7 +97,7 @@ This matrix evaluates the WindLens application directly against the authoritativ
 1. **Record the 5-Minute Demonstration Screencast**:
    - Use OBS Studio, Loom, or Windows Game Bar (`Win + G`).
    - Follow the two-part presentation outline:
-     - **Part 1 (Client Presentation — 2.5 min)**: Open [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/). Highlight January 1–7 results. Explain the 11:00 UTC D-1 decision cutoff. Demonstrate switching cutoff to 15:30 UTC to show the effect of later gate closure. Point out the systematic positive bias (Storm Henk) and how it affects day-ahead trading volume hedges. Export CSV.
+     - **Part 1 (Client Presentation — 2.5 min)**: Open [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/). Highlight January 1–7 results. Explain the 11:00 UTC D-1 decision cutoff. Demonstrate switching cutoff to 15:30 UTC to show the effect of later gate closure. Point out the systematic positive bias in early January and how it affects day-ahead trading volume hedges. Export CSV.
      - **Part 2 (Technical Review — 2.5 min)**: Show repository structure. Open `selection.py` to highlight zero look-ahead logic (`publishTime < cutoff`). Open `alignment.py` to show $(\text{SP}_1 + \text{SP}_2)/2$ averaging. Run `pytest tests/ -v` (35 passing tests). Show Docker configuration.
    - Upload to YouTube as **Unlisted**.
 2. **Update README**:
