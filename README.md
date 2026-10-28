@@ -6,6 +6,13 @@
   <strong>Institutional-grade day-ahead wind generation forecast intelligence, zero look-ahead decision audits, and metered settlement reconciliation for Great Britain power procurement desks.</strong>
 </p>
 
+### 🌐 Verified Production Deployments
+
+> - **Live Application:** [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/)
+> - **Backend API:** [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com)
+> - **API Documentation:** [https://windlens-backend-5xda.onrender.com/docs](https://windlens-backend-5xda.onrender.com/docs)
+> - **Service Health:** [https://windlens-backend-5xda.onrender.com/health](https://windlens-backend-5xda.onrender.com/health)
+
 <p align="center">
   <a href="https://windlens-analytics.vercel.app/">
     <img src="https://img.shields.io/badge/🚀_Live_Portal-windlens--analytics.vercel.app-0F766E?style=for-the-badge&logoColor=white" alt="Live Demo" />
@@ -37,10 +44,12 @@
   <a href="#-key-features">Key Features</a> •
   <a href="#-system-architecture">Architecture</a> •
   <a href="#-data-flow-pipeline">Data Flow</a> •
+  <a href="#-elexon-data-ingestion--pipeline-rigor">Data Ingestion</a> •
   <a href="#-core-algorithms--methodology">Methodology</a> •
   <a href="#-accuracy-metrics--statistical-rigor">Metrics</a> •
   <a href="#-technology-stack">Tech Stack</a> •
   <a href="#-repository-structure">Project Structure</a> •
+  <a href="#-environment-configuration">Configuration</a> •
   <a href="#-rest-api-specification">API Reference</a> •
   <a href="#-local-development--quickstart">Setup</a> •
   <a href="#-quality-assurance--testing">Testing</a> •
@@ -79,16 +88,19 @@ Procurement analysts face two critical operational questions before committing c
 
 ## 🚀 Live Deployments
 
-| Component | Cloud Platform | Verified Production URL | HTTP Status | Role & Verification Notes |
-|---|---|---|:---:|---|
-| **Production Frontend** | Vercel Edge | [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/) | **200 OK** | Verified canonical production domain. Serves optimized React 19 SPA. |
-| **Frontend Alias** | Vercel Edge | [https://q7m2x9kp-seven.vercel.app/](https://q7m2x9kp-seven.vercel.app/) | **307 Redirect** | Default deployment alias automatically redirected to canonical domain. |
-| **Production Backend** | Render Cloud | [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com) | **200 OK** | Containerized FastAPI backend (`python:3.11-slim`) in Frankfurt region. |
-| **Health Check** | Render Cloud | [https://windlens-backend-5xda.onrender.com/health](https://windlens-backend-5xda.onrender.com/health) | **200 OK** | Returns service health status and active default cutoff hour (`11` UTC). |
-| **API Documentation** | Render / OpenAPI | [https://windlens-backend-5xda.onrender.com/docs](https://windlens-backend-5xda.onrender.com/docs) | **200 OK** | Interactive Swagger UI API documentation and OpenAPI JSON schema. |
-| **GitHub Repository** | GitHub | [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp) | **Active** | Anonymous repository identifier `q7m2x9kp` matching submission spec. |
+> [!IMPORTANT]
+> **Production Status Verified**: The links below point to the live cloud-hosted application and backend services. These are completely separate from local developer instances.
 
-> **Hosting Notice**: The backend is hosted on Render's free cloud tier. Inactivity for 15 minutes causes the container to spin down. The initial inbound request may require 30–45 seconds for cold start; subsequent requests respond in ~500 ms.
+| Component | Cloud Platform | Verified Production URL | HTTP Status | Role & Verification Details |
+|---|---|---|:---:|---|
+| **Live Application** | Vercel Edge | [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/) | **200 OK** | **Canonical production frontend.** Serves optimized React 19 SPA connected directly to the production Render backend. |
+| **Backend API** | Render Cloud | [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com) | **200 OK** | **Containerized FastAPI service** (`python:3.11-slim`) hosted in Frankfurt with CORS configured for Vercel. |
+| **API Documentation** | Render / Swagger | [https://windlens-backend-5xda.onrender.com/docs](https://windlens-backend-5xda.onrender.com/docs) | **200 OK** | Interactive OpenAPI / Swagger UI endpoint explorer and schema inspector. |
+| **Service Health Check** | Render Cloud | [https://windlens-backend-5xda.onrender.com/health](https://windlens-backend-5xda.onrender.com/health) | **200 OK** | Automated uptime check returning backend status and active cutoff configuration. |
+| **Frontend Alias** | Vercel Edge | [https://q7m2x9kp-seven.vercel.app/](https://q7m2x9kp-seven.vercel.app/) | **307 Redirect** | Default deployment alias automatically redirected to the canonical custom domain. |
+| **GitHub Repository** | GitHub | [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp) | **Active** | Primary repository codebase with automated CI build checks. |
+
+> **Render Cold-Start Notice**: The backend is hosted on Render's free tier. After 15 minutes of inactivity, the container enters sleep mode. An initial cold-start request requires ~30–45 seconds; all subsequent queries respond in ~500 ms.
 
 ---
 
@@ -227,6 +239,22 @@ sequenceDiagram
     API-->>UI: 200 OK JSON Payload (168 Matched Delivery Hours)
     UI->>Analyst: Renders Dual Line Chart, Residual Bar Chart & Table
 ```
+
+---
+
+## ⚡ Elexon Data Ingestion & Pipeline Rigor
+
+WindLens interacts directly with the official public Elexon BMRS API v1 via asynchronous HTTPX streaming:
+
+| Dataset | API Endpoint | Settlement Scope | Field Extraction |
+|---|---|---|---|
+| **FUELHH** | `/datasets/FUELHH/stream` | Half-hourly (Settlement Periods 1–48) | `startTime`, `settlementDate`, `settlementPeriod`, `fuelType="WIND"`, `generation` (MW) |
+| **WINDFOR** | `/datasets/WINDFOR/stream` | Hourly clock intervals | `startTime`, `publishTime`, `generation` (MW forecast) |
+
+### Ingestion Robustness & Isolation
+1. **Streaming Chunks**: Data is consumed using `httpx.AsyncClient` streaming readers, parsing newline-delimited JSON objects to prevent memory spikes.
+2. **Request-Scoped Isolation**: To avoid shared mutable state or cross-tenant cache contamination, each API query instantiates request-scoped evaluation data in `backend/app/services/data_service.py`.
+3. **Graceful Error Recovery**: If Elexon BMRS encounters transient 502/503 outages, WindLens surfaces a non-blocking provenance notification rather than injecting synthetic numbers.
 
 ---
 
@@ -372,12 +400,30 @@ windlens/
 
 ---
 
+## ⚙️ Environment Configuration
+
+WindLens loads configuration from environment variables via Pydantic v2 Settings. Copy [`.env.example`](.env.example) to `.env` for local customizations:
+
+| Variable | Target Service | Default Value | Role & Purpose |
+|---|---|---|---|
+| `ELEXON_BASE_URL` | Backend | `https://data.elexon.co.uk/bmrs/api/v1` | Public Elexon BMRS API root endpoint |
+| `DEFAULT_CUTOFF_HOUR` | Backend | `11` | Default D-1 decision cutoff hour (UTC) |
+| `ALLOWED_ORIGINS` | Backend | `http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,*` | Comma-separated allowed CORS origins |
+| `USE_FIXTURES` | Backend | `false` | When `true`, enables deterministic offline fixtures for air-gapped testing |
+| `VITE_API_URL` | Frontend | `""` (proxied in dev) | Base URL of FastAPI backend (`https://windlens-backend-5xda.onrender.com` in production) |
+
+---
+
 ## 📡 REST API Specification
 
 ### 1. `GET /health`
 Returns service status and active default cutoff configuration:
 ```bash
+# Production Query:
 curl -s "https://windlens-backend-5xda.onrender.com/health"
+
+# Local Development Query:
+curl -s "http://localhost:8000/health"
 ```
 **Response (200 OK)**:
 ```json
@@ -398,6 +444,7 @@ Retrieves reconciled hourly intervals (forecast vs actual) for a delivery date r
 * **Validation Errors**: Returns `422 Unprocessable Entity` if dates fall outside January 2026 or `date_from > date_to`.
 
 ```bash
+# Production Query:
 curl -s "https://windlens-backend-5xda.onrender.com/api/forecasts?date_from=2026-01-01&date_to=2026-01-01&cutoff_hour=11"
 ```
 **Sample Response Item (200 OK)**:
@@ -418,6 +465,7 @@ curl -s "https://windlens-backend-5xda.onrender.com/api/forecasts?date_from=2026
 ### 3. `GET /api/accuracy`
 Computes summary accuracy metrics over all matched delivery intervals:
 ```bash
+# Production Query:
 curl -s "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-01-01&date_to=2026-01-03&cutoff_hour=11"
 ```
 **Response (200 OK)**:
@@ -435,6 +483,7 @@ curl -s "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-
 ### 4. `GET /api/data-quality`
 Reports data provenance, completeness, and settlement record statistics:
 ```bash
+# Production Query:
 curl -s "https://windlens-backend-5xda.onrender.com/api/data-quality?date_from=2026-01-01&date_to=2026-01-07&cutoff_hour=11"
 ```
 **Response (200 OK)**:
@@ -459,10 +508,14 @@ curl -s "https://windlens-backend-5xda.onrender.com/api/data-quality?date_from=2
 
 ## 💻 Local Development & Quickstart
 
+> [!IMPORTANT]
+> **Localhost Isolation Notice**: The URLs below (`http://localhost:3000`, `http://localhost:8000`) apply **strictly to your local workstation** when running WindLens natively or via Docker Compose.
+> For the live cloud deployment, see the [Live Deployments](#-live-deployments) section above.
+
 ### Prerequisites
 * **Python 3.11+** (tested on 3.11 and 3.13)
 * **Node.js 20+** and **npm**
-* **Docker & Docker Compose** (optional, for containerized local execution)
+* **Docker & Docker Compose** (optional, for multi-container local execution)
 
 ### Option A: Local Docker Compose (Fastest)
 ```bash
@@ -476,9 +529,9 @@ cp .env.example .env
 # 3. Start multi-container stack
 docker compose up --build
 ```
-* **Frontend Portal**: [http://localhost:3000](http://localhost:3000)
-* **Backend API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
-* **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
+* **Local Frontend (Workstation)**: [http://localhost:3000](http://localhost:3000)
+* **Local Backend API Docs (Workstation)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **Local Health Check (Workstation)**: [http://localhost:8000/health](http://localhost:8000/health)
 
 ### Option B: Native Development
 
