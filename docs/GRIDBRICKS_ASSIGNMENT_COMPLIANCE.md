@@ -94,11 +94,12 @@
 
 ## 4. Immediate Candidate Action Plan (To Reach 100% Final Submission)
 
-1. **Record the 5-Minute Demonstration Screencast**:
+1. **Record the 10-Minute Demonstration Screencast** (max 10 minutes total, max 5 min per audience part):
    - Use OBS Studio, Loom, or Windows Game Bar (`Win + G`).
    - Follow the two-part presentation outline:
-     - **Part 1 (Client Presentation — 2.5 min)**: Open [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/). Highlight January 1–7 results. Explain the 11:00 UTC D-1 decision cutoff. Demonstrate switching cutoff to 15:30 UTC to show the effect of later gate closure. Point out the systematic positive bias in early January and how it affects day-ahead trading volume hedges. Export CSV.
-     - **Part 2 (Technical Review — 2.5 min)**: Show repository structure. Open `selection.py` to highlight zero look-ahead logic (`publishTime < cutoff`). Open `alignment.py` to show $(\text{SP}_1 + \text{SP}_2)/2$ averaging. Run `pytest tests/ -v` (35 passing tests). Show Docker configuration.
+     - **Part 1 (Customer Presentation — max 5 min, timed 0:00–4:50)**: Follow the word-for-word customer pitch in `WindLens_10_Minute_Demo_Script.tex`. Open [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/). Frame the procurement decision problem. Review January 1–7 results (MAE 2,154 MW, bias +1,984 MW). Demonstrate the 11:00 UTC D-1 decision cutoff. Demonstrate switching cutoff to show how later forecast releases alter the available picture. Explain the systematic positive bias and physical imbalance exposure without over-promising trading outcomes. Demonstrate data quality indicators and CSV export.
+     - **Part 2 (Technical Review — max 5 min, timed 4:50–9:40)**: Follow the word-for-word technical review in `WindLens_10_Minute_Demo_Script.tex`. Walk through repository architecture and React/Python separation. Open `elexon.py` for streaming ingestion. Open `selection.py` to highlight zero look-ahead logic (`publishTime < cutoff`). Open `alignment.py` to show $(\text{SP}_1 + \text{SP}_2)/2$ averaging. Open `metrics.py` for metric calculations. Demonstrate API schemas and tests (`pytest tests/ -v`, 35 passing tests). Review Docker Compose multi-container configuration and cloud deployments.
+   - **Target Duration**: ~9 minutes 40 seconds (safely under the strict 10-minute ceiling).
    - Upload to YouTube as **Unlisted**.
 2. **Update README**:
    - Paste the unlisted YouTube URL into Section 2 of [README.md](file:///c:/Users/kaush/OneDrive/Desktop/windlens/README.md).
