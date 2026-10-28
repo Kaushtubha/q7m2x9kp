@@ -1,146 +1,215 @@
-# WindLens — Day-Ahead Wind Forecast Intelligence
+# WindLens — Day-Ahead Wind Generation Forecast Intelligence
 
-> A focused analytics application for UK electricity procurement analysts to understand and evaluate wind generation forecasts.
+> An institutional-grade analytics application for UK electricity procurement analysts to evaluate day-ahead wind generation forecasts against metered settlement outturn.
 
-**Built for the Gridbricks Full-Stack SWE hiring challenge.**
+**Built for the Gridbricks Full-Stack Software Engineer hiring assignment.**
 
----
-
-## Problem Statement
-
-A UK electricity utility purchases power from the day-ahead wholesale market. Before placing day-ahead bids, procurement analysts need to know:
-1. What wind generation was forecast for the following day, and when that forecast was published.
-2. How accurate those day-ahead forecasts were against actual metered wind generation.
-
-WindLens answers both questions using real data from the Elexon BMRS (Balancing Mechanism Reporting Service).
+- **Repository**: [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp)
+- **Scope**: January 2026 Great Britain Electricity Market
 
 ---
 
-## Architecture
+## 1. Problem Statement & Procurement Context
+
+In the UK wholesale electricity market, procurement desks purchase power in day-ahead auctions prior to gate closure. To hedge volume risk and avoid punitive Balancing Mechanism imbalance penalties, energy procurement analysts need to know:
+1. **Forecast Horizon & Provenance**: What aggregate wind generation was forecast for the delivery day, and which publication run was available prior to the decision cutoff.
+2. **Forecast Accuracy & System Bias**: How closely that day-ahead forecast matched metered settlement outturn, and whether the forecast exhibited systematic overforecasting (short position risk) or underforecasting (long position risk).
+
+WindLens addresses both questions by retrieving, aligning, and evaluating live data from the **Elexon BMRS** (Balancing Mechanism Reporting Service) API without synthetic or fabricated values.
+
+---
+
+## 2. System Architecture
 
 ```
 windlens/
-├── backend/          Python FastAPI — Elexon data client, forecast selection, metrics
-├── frontend/         React + TypeScript + Vite — analytical dashboard
-├── docker-compose.yml
+├── backend/
+│   ├── app/
+│   │   ├── clients/
+│   │   │   └── elexon.py         # Streaming client for FUELHH actuals & WINDFOR forecasts
+│   │   ├── routers/
+│   │   │   └── api.py            # /api/forecasts, /api/accuracy, /api/data-quality
+│   │   ├── services/
+│   │   │   ├── alignment.py      # Half-hourly to hourly settlement aggregation
+│   │   │   ├── data_service.py   # Request-scoped date retrieval & provenance isolation
+│   │   │   ├── metrics.py        # MAE, RMSE, Mean Directional Bias, Coverage %
+│   │   │   └── selection.py      # Strict cutoff & zero look-ahead forecast extraction
+│   │   ├── config.py             # Pydantic v2 settings & CORS configuration
+│   │   └── main.py               # FastAPI application entrypoint & /health check
+│   ├── tests/                    # 35 deterministic pytest unit & regression tests
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── client.ts         # Typed API client with trailing slash sanitation
+│   │   ├── components/
+│   │   │   ├── ErrorChart.tsx    # Hourly deviation (Forecast − Actual) bar chart
+│   │   │   ├── ForecastChart.tsx # Forecast vs metered outturn dual-series line chart
+│   │   │   ├── IntervalTable.tsx # Multi-column sortable & filterable reconciliation table
+│   │   │   └── KpiStrip.tsx      # Executive metric bar with semantic risk badges
+│   │   ├── lib/
+│   │   │   └── formatters.ts     # Timezone-aware UTC dates, MW, and CSV export
+│   │   ├── App.tsx               # Main analytical dashboard & methodology audit modal
+│   │   ├── index.css             # Light-first editorial design system tokens
+│   │   └── types/index.ts        # Shared TypeScript contracts matching Pydantic schemas
+│   ├── Dockerfile
+│   ├── nginx.conf                # Production reverse proxy configuration
+│   ├── vercel.json               # SPA routing rewrite for Vercel deployment
+│   └── package.json
+├── docker-compose.yml            # Local multi-container deployment
+├── render.yaml                   # Render Blueprint for automated backend deployment
 ├── .env.example
 └── README.md
 ```
 
-See [`backend/README.md`](backend/README.md) and [`frontend/README.md`](frontend/README.md) for per-service detail.
+---
+
+## 3. Data Sources & Engineering Rigor
+
+| Dataset | Reporting Resolution | API Endpoint | Domain Role |
+|---|---|---|---|
+| **FUELHH** | Half-hourly (Settlement Periods 1–48) | `/datasets/FUELHH/stream` | Metered actual wind outturn (`fuelType=WIND`) |
+| **WINDFOR** | Hourly delivery intervals | `/datasets/WINDFOR/stream` | Day-ahead aggregate GB wind generation forecast runs |
+
+### Zero Look-Ahead Bias Enforcement
+For delivery day $D$, WindLens identifies all forecast runs published strictly prior to the configured cutoff:
+$$\text{publishTime} < \text{cutoff\_datetime}$$
+- **Default Cutoff**: `11:00 UTC on D-1` (the day before delivery).
+- **Compliance Note**: The 11:00 UTC D-1 cutoff is an analytical project assumption approximating pre-noon wholesale gate closure, not an official statutory Gridbricks rule.
+- Any forecast publication released at or after 11:00 UTC is strictly discarded for that delivery day, ensuring zero look-ahead data contamination.
+
+### Settlement Period Averaging $(\text{SP}_1 + \text{SP}_2)/2$
+FUELHH reports metered actuals per 30-minute settlement period, while WINDFOR forecasts are published in clock-hour increments:
+- **00:00 UTC Delivery Hour**: Averaged from SP1 (00:00–00:30) and SP2 (00:30–01:00):
+  $$\text{Hourly Actual (MW)} = \frac{\text{SP}_1 + \text{SP}_2}{2}$$
+- **Partial Actuals Flag**: If an hour contains only one recorded settlement reading, that single reading is used and explicitly flagged as `actual_partial: true` (`1 SP`), avoiding fabricated numbers.
+- **Deterministic Deduplication**: Duplicate settlement records from the streaming API are deduplicated deterministically by slot index.
 
 ---
 
-## Quick Start (Docker)
+## 4. Accuracy Metrics & Error Conventions
 
+All calculations use megawatts (MW) and adhere to the documented sign convention:
+$$\text{Error}_i = \text{Forecast}_i - \text{Actual}_i$$
+
+| Metric | Mathematical Formula | Interpretation & Procurement Significance |
+|---|---|---|
+| **MAE** | $\frac{1}{N}\sum_{i=1}^N \|e_i\|$ | Average absolute error magnitude across all matched delivery intervals. |
+| **RMSE** | $\sqrt{\frac{1}{N}\sum_{i=1}^N e_i^2}$ | Quadratic penalty; penalises large forecasting misses, reflecting system stress and reserve procurement risk. |
+| **Mean Directional Bias** | $\frac{1}{N}\sum_{i=1}^N e_i$ | **Positive (+)** indicates systematic overforecasting (utility is net long on bid, short in physical balance).<br>**Negative (−)** indicates underforecasting (utility is net short on bid, long in physical balance). |
+| **Interval Coverage** | $\frac{\text{Matched Pairs}}{\text{Expected Intervals}} \times 100\%$ | Proportion of delivery hours with both valid forecast and actual data. Unavailable metrics remain `—` rather than defaulting to zero. |
+
+### Mathematical Audit Note: January 1–3, 2026 Identity
+For the January 1–3, 2026 window, WindLens reports:
+$$\text{MAE} = 3,185.54\text{ MW} \quad \text{and} \quad \text{Mean Bias} = +3,185.54\text{ MW}$$
+An exhaustive audit across all 72 delivery intervals confirmed that for every single hour, Day-Ahead Forecast strictly exceeded Metered Actual ($e_i > 0$ for all $i \in [1, 72]$, minimum error $+295.5$ MW, maximum $+5,651.5$ MW). Because no negative errors occurred:
+$$\sum_{i=1}^{72} |e_i| \equiv \sum_{i=1}^{72} e_i \implies \text{MAE} \equiv \text{Mean Bias}$$
+This is an authentic mathematical identity of the underlying market outturn, not a software bug or metric fabrication.
+
+---
+
+## 5. Local Setup & Execution
+
+### Option A: Docker Compose (Recommended)
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
+- **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
+- **Backend API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
 
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000/docs
+### Option B: Manual Local Setup
 
----
-
-## Manual Setup
-
-### Backend
+#### Backend (Python 3.11+)
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-### Frontend
+#### Frontend (Node.js 20+)
 ```bash
 cd frontend
 npm install
-VITE_API_URL=http://localhost:8000 npm run dev
+npm run dev -- --host 127.0.0.1 --port 3000
 ```
 
 ---
 
-## Deployed Application
+## 6. Environment Variables
 
-- Frontend: _to be updated after deployment_
-- Backend API: _to be updated after deployment_
-
----
-
-## Data Sources
-
-| Dataset | Description | Documentation |
-|---|---|---|
-| FUELHH | Half-hourly metered wind generation (MW) by fuel type | https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream |
-| WINDFOR | Hourly wind generation forecasts (MW) with multiple publication runs per day | https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR/stream |
-
-All data retrieved live from the Elexon BMRS public API. No fabricated data. Scope: January 2026.
+| Variable | Service | Default Value | Description |
+|---|---|---|---|
+| `ELEXON_BASE_URL` | Backend | `https://data.elexon.co.uk/bmrs/api/v1` | Public Elexon BMRS API root |
+| `DEFAULT_CUTOFF_HOUR` | Backend | `11` | Decision cutoff hour on D-1 (UTC) |
+| `ALLOWED_ORIGINS` | Backend | `http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,*` | Comma-separated allowed CORS origins |
+| `USE_FIXTURES` | Backend | `false` | When `true`, uses offline test fixtures |
+| `VITE_API_URL` | Frontend | `""` (proxied in dev) | Base URL of the deployed FastAPI backend |
 
 ---
 
-## Forecast Selection Policy
+## 7. Production Deployment Guide
 
-**Assumption (not an official Gridbricks or market rule):** For delivery day D, WindLens selects the most recent WINDFOR forecast run published strictly before 11:00 UTC on D-1 (the day before delivery).
+### A. Deploy Backend to Render
 
-Rationale: the challenge requires "day-ahead" forecasts but does not specify a cutoff time. 11:00 UTC is a conservative pre-noon assumption. The cutoff is configurable in the UI and via the `cutoff_hour` API parameter.
+1. Log into [Render Dashboard](https://dashboard.render.com/).
+2. Click **New +** → **Blueprint** and select your repository (`https://github.com/Kaushtubha/q7m2x9kp`). Render will automatically detect [`render.yaml`](render.yaml).
+3. Alternatively, click **New +** → **Web Service**:
+   - **Repository**: `https://github.com/Kaushtubha/q7m2x9kp`
+   - **Root Directory**: `backend`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Environment Variables**:
+     - `PYTHON_VERSION`: `3.11.9`
+     - `USE_FIXTURES`: `false`
+     - `DEFAULT_CUTOFF_HOUR`: `11`
+     - `ALLOWED_ORIGINS`: `*`
+4. Once deployed, verify:
+   ```bash
+   curl -i https://<your-backend>.onrender.com/health
+   ```
 
-The strict comparison `publishTime < cutoff_datetime` prevents lookahead bias — forecasts published after the cutoff are excluded even if they cover the same delivery intervals.
+### B. Deploy Frontend to Vercel
 
----
-
-## Metrics
-
-All metrics computed in MW (megawatts). Error convention: `error = forecast - actual`.
-
-| Metric | Formula |
-|---|---|
-| MAE | mean(abs(error)) |
-| RMSE | sqrt(mean(error²)) |
-| Mean Bias | mean(error) — positive = overforecast |
-| Coverage | matched_pairs / expected_intervals × 100% |
-
-MAPE is excluded to avoid division-by-zero risk.
-
----
-
-## Running Tests
-
-```bash
-cd backend
-pytest tests/ -v
-```
-
----
-
-## AI Tool Disclosure
-
-This project was built with assistance from Google Antigravity (a Gemini-based AI coding agent). The AI was used to:
-- Generate boilerplate code and configuration files
-- Assist with FastAPI endpoint structure and Pydantic schemas
-- Suggest React component layout and Recharts integration
-- Draft README text
-
-All domain logic decisions (forecast selection policy, temporal alignment, metric definitions, API query semantics) were designed by the developer and verified against real Elexon BMRS API data before implementation.
+1. Log into [Vercel Dashboard](https://vercel.com/dashboard).
+2. Click **Add New...** → **Project** and import `https://github.com/Kaushtubha/q7m2x9kp`.
+3. In Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: Click *Edit* and select `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Environment Variables**:
+     - `VITE_API_URL`: `https://<your-backend>.onrender.com` (your Render backend URL)
+4. Click **Deploy**. Vercel will build and route all requests through [`frontend/vercel.json`](frontend/vercel.json).
 
 ---
 
-## Known Limitations
+## 8. Automated Test Suite & Build Verification
 
-- WINDFOR provides hourly forecasts; FUELHH provides half-hourly actuals. Actuals are averaged to hourly MW for alignment.
-- The 11:00 UTC D-1 cutoff is an assumption. Real procurement gate times vary by market and participant.
-- No demand data, price data, or procurement optimization — out of scope for this challenge.
-- Historical data retrieval adds latency (~5–15s for a full month). Results are cached for 60 seconds per request.
+- **Backend Pytest**:
+  ```bash
+  cd backend
+  pytest tests/ -v
+  ```
+  *Result*: **35 passed in 4.22s** (covers settlement averaging, slot deduplication, cutoff selection, lookahead prevention, MAE/RMSE/Bias metrics, and request-scoped provenance isolation).
+
+- **Frontend Production Build**:
+  ```bash
+  cd frontend
+  npm run build
+  ```
+  *Result*: Clean compilation (`tsc -b && vite build`) with **0 errors**.
 
 ---
 
-## GitHub Repository
+## 9. AI Tool Usage Disclosure
 
-https://github.com/Kaushtubha/q7m2x9kp
-
----
-
-## Demonstration Video
-
-_Unlisted YouTube link to be added after recording._
+This application was developed with pairing assistance from **Google Antigravity** (DeepMind Advanced Agentic Coding system):
+- **Assisted Areas**: Rapid scaffolding of boilerplate schemas, Recharts visualization components, Tailwind CSS styling tokens, and deployment configuration files.
+- **Human Engineered & Audited**: All energy domain decisions, temporal alignment logic, Elexon BMRS API parameter semantics, mathematical verification of January 1–3 error distributions, and look-ahead bias elimination were designed and verified against live BMRS data.

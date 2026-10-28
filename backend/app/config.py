@@ -23,9 +23,10 @@ class Settings(BaseSettings):
 
     # CORS origins: comma-separated string, split at startup
     allowed_origins: str = Field(
-        default="http://localhost:3000,http://localhost:5173",
+        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,*",
         alias="ALLOWED_ORIGINS",
     )
+
 
     # HTTP client timeouts in seconds
     http_connect_timeout: float = 10.0

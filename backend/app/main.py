@@ -27,11 +27,12 @@ app = FastAPI(
 origins = [o.strip() for o in settings.allowed_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"] if "*" in origins else origins,
     allow_credentials=False,
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
 
 app.include_router(api_router)
 

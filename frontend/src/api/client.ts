@@ -5,7 +5,9 @@
 
 import type { AccuracyMetrics, DataQualityReport, ForecastActualPair } from '../types';
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+const rawBase = import.meta.env.VITE_API_URL ?? '';
+const BASE = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
