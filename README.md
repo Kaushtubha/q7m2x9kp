@@ -166,18 +166,12 @@ npm run dev -- --host 127.0.0.1 --port 3000
   ```
 
 
-### B. Deploy Frontend to Vercel
+### B. Deployed Frontend (Live on Vercel)
 
-1. Log into [Vercel Dashboard](https://vercel.com/dashboard).
-2. Click **Add New...** → **Project** and import `https://github.com/Kaushtubha/q7m2x9kp`.
-3. In Project Settings:
-   - **Framework Preset**: `Vite`
-   - **Root Directory**: Click *Edit* and select `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Environment Variables**:
-     - `VITE_API_URL`: `https://<your-backend>.onrender.com` (your Render backend URL)
-4. Click **Deploy**. Vercel will build and route all requests through [`frontend/vercel.json`](frontend/vercel.json).
+- **Live URL**: [`https://q7m2x9kp-seven.vercel.app/`](https://q7m2x9kp-seven.vercel.app/)
+- **Backend API Connected**: `https://windlens-backend-5xda.onrender.com`
+- **CORS & Routing**: Managed via [`frontend/vercel.json`](frontend/vercel.json) SPA rewrites and FastAPI wildcard CORS middleware.
+
 
 ---
 
