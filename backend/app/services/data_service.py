@@ -5,6 +5,7 @@ hourly alignment, and metric calculation for a date range.
 
 from __future__ import annotations
 
+import concurrent.futures
 import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
@@ -12,7 +13,6 @@ from typing import Optional
 from app.clients.elexon import (
     fetch_fuelhh_wind_for_date,
     fetch_windfor_published_on,
-    get_current_data_source,
 )
 from app.services.alignment import aggregate_fuelhh_to_hourly
 from app.services.selection import (
@@ -35,16 +35,25 @@ def _date_range(date_from: date, date_to: date) -> list[date]:
     return result
 
 
-def _process_single_date(delivery_date: date, cutoff_hour_utc: int) -> list[ForecastActualPair]:
-    """Process a single delivery date and return its 24 hourly pairs."""
+def _process_single_date(
+    delivery_date: date, cutoff_hour_utc: int
+) -> tuple[list[ForecastActualPair], str]:
+    """
+    Process a single delivery date and return:
+      (day_pairs, day_source)
+    where day_source is 'live_elexon', 'fixture', or 'fixture_fallback'.
+    """
     day_before = delivery_date - timedelta(days=1)
+    wf_source = "live_elexon"
+    fh_source = "live_elexon"
 
     # 1. Fetch WINDFOR published on D-1
     try:
-        windfor_records = fetch_windfor_published_on(day_before)
+        windfor_records, wf_source = fetch_windfor_published_on(day_before)
     except Exception as exc:
         log.error("Failed to fetch WINDFOR for D-1=%s: %s", day_before, exc)
         windfor_records = []
+        wf_source = "error"
 
     # 2. Select the qualifying day-ahead run
     selected_run = select_day_ahead_forecast_run(
@@ -60,10 +69,11 @@ def _process_single_date(delivery_date: date, cutoff_hour_utc: int) -> list[Fore
 
     # 4. Fetch FUELHH wind actuals for the delivery date
     try:
-        fuelhh_records = fetch_fuelhh_wind_for_date(delivery_date)
+        fuelhh_records, fh_source = fetch_fuelhh_wind_for_date(delivery_date)
     except Exception as exc:
         log.error("Failed to fetch FUELHH for %s: %s", delivery_date, exc)
         fuelhh_records = []
+        fh_source = "error"
 
     # 5. Aggregate HH actuals to hourly
     hourly_actuals = aggregate_fuelhh_to_hourly(fuelhh_records)
@@ -109,7 +119,15 @@ def _process_single_date(delivery_date: date, cutoff_hour_utc: int) -> list[Fore
             actual_partial=partial,
         ))
 
-    return day_pairs
+    # Determine day source without global state
+    if "fixture_fallback" in (wf_source, fh_source):
+        day_source = "fixture_fallback"
+    elif "fixture" in (wf_source, fh_source):
+        day_source = "fixture"
+    else:
+        day_source = "live_elexon"
+
+    return day_pairs, day_source
 
 
 def get_forecast_actuals(
@@ -130,8 +148,6 @@ def get_forecast_actuals(
     if not dates:
         return []
 
-    import concurrent.futures
-
     max_workers = min(len(dates), 8)
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         day_results = list(
@@ -139,8 +155,8 @@ def get_forecast_actuals(
         )
 
     pairs: list[ForecastActualPair] = []
-    for r in day_results:
-        pairs.extend(r)
+    for day_pairs, _ in day_results:
+        pairs.extend(day_pairs)
 
     return pairs
 
@@ -168,9 +184,31 @@ def get_data_quality(
     date_to: date,
     cutoff_hour_utc: int = 11,
 ) -> DataQualityReport:
-    """Build a data quality report for the given date range."""
-    pairs = get_forecast_actuals(date_from, date_to, cutoff_hour_utc)
-    expected = len(_date_range(date_from, date_to)) * 24
+    """
+    Build a data quality report for the given date range.
+    Determines data source provenance purely from the dates queried in this request.
+    """
+    dates = _date_range(date_from, date_to)
+    expected = len(dates) * 24
+
+    max_workers = min(len(dates), 8) if dates else 1
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        day_results = list(
+            executor.map(lambda d: _process_single_date(d, cutoff_hour_utc), dates)
+        )
+
+    pairs: list[ForecastActualPair] = []
+    sources: set[str] = set()
+    for day_pairs, day_source in day_results:
+        pairs.extend(day_pairs)
+        sources.add(day_source)
+
+    if "fixture_fallback" in sources:
+        effective_source = "fixture_fallback" if "live_elexon" not in sources else "mixed_live_and_fixture"
+    elif "fixture" in sources:
+        effective_source = "fixture"
+    else:
+        effective_source = "live_elexon"
 
     matched = sum(1 for p in pairs if p.forecast_mw is not None and p.actual_mw is not None)
     missing_forecast = sum(1 for p in pairs if p.forecast_mw is None)
@@ -180,7 +218,7 @@ def get_data_quality(
     actual_available = sum(1 for p in pairs if p.actual_mw is not None)
 
     return DataQualityReport(
-        source=get_current_data_source(),
+        source=effective_source,
         last_fetched_utc=datetime.now(tz=timezone.utc),
         date_from=date_from,
         date_to=date_to,

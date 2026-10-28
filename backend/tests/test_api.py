@@ -103,3 +103,19 @@ def test_cutoff_hour_parameter_accepted():
     with patch("app.services.data_service.get_forecast_actuals", return_value=SAMPLE_PAIRS):
         response = client.get("/api/forecasts?date_from=2026-01-02&date_to=2026-01-02&cutoff_hour=15")
     assert response.status_code == 200
+
+
+def test_data_quality_provenance_isolation():
+    """Verify that data quality reports determine source per-request without shared state pollution."""
+    from app.services.data_service import get_data_quality
+
+    # Request 1: Simulated fixture fallback
+    with patch("app.services.data_service._process_single_date", return_value=(SAMPLE_PAIRS, "fixture_fallback")):
+        report1 = get_data_quality(date(2026, 1, 2), date(2026, 1, 2))
+    assert report1.source == "fixture_fallback"
+
+    # Request 2: Normal live request must NOT be poisoned by the previous request's fallback
+    with patch("app.services.data_service._process_single_date", return_value=(SAMPLE_PAIRS, "live_elexon")):
+        report2 = get_data_quality(date(2026, 1, 3), date(2026, 1, 3))
+    assert report2.source == "live_elexon"
+

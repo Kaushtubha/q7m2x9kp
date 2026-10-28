@@ -14,8 +14,10 @@ Verified API facts (tested 2026-10-28):
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -30,38 +32,17 @@ WINDFOR_URL = f"{settings.elexon_base_url}/datasets/WINDFOR/stream"
 # Maximum response size guard — 50 MB should be ample for a single day query
 _MAX_RESPONSE_BYTES = 50 * 1024 * 1024
 
-# In-memory caches to avoid redundant external network calls for historical data
-_FUELHH_CACHE: dict[str, list[dict[str, Any]]] = {}
-_WINDFOR_CACHE: dict[str, list[dict[str, Any]]] = {}
+# In-memory caches storing (records, source_label) per date to avoid redundant external network roundtrips
+_FUELHH_CACHE: dict[str, tuple[list[dict[str, Any]], str]] = {}
+_WINDFOR_CACHE: dict[str, tuple[list[dict[str, Any]], str]] = {}
 
-# Transparent provenance tracking
-_DATA_SOURCE_INFO: dict[str, Any] = {
-    "live_success_count": 0,
-    "fallback_count": 0,
-    "last_error": None,
-}
-
-
-def get_current_data_source() -> str:
-    """Return the observed data source label for honest reporting."""
-    if _DATA_SOURCE_INFO["fallback_count"] > 0:
-        if _DATA_SOURCE_INFO["live_success_count"] > 0:
-            return "fixture_fallback"
-        return "fixture"
-    return "live_elexon"
-
-
-def reset_data_source_tracking() -> None:
-    """Reset provenance tracking counters (useful for test isolation)."""
-    _DATA_SOURCE_INFO["live_success_count"] = 0
-    _DATA_SOURCE_INFO["fallback_count"] = 0
-    _DATA_SOURCE_INFO["last_error"] = None
+_FIXTURES_DIR = Path(__file__).parent.parent.parent / "tests" / "fixtures"
 
 
 def _make_client() -> httpx.Client:
     return httpx.Client(
         timeout=httpx.Timeout(
-            settings.http_read_timeout,  # default for all
+            settings.http_read_timeout,
             connect=settings.http_connect_timeout,
         )
     )
@@ -90,21 +71,32 @@ def _fetch(url: str, params: dict[str, str]) -> list[dict[str, Any]]:
 # FUELHH — Wind actuals
 # ---------------------------------------------------------------------------
 
-def fetch_fuelhh_wind_for_date(delivery_date: date) -> list[dict[str, Any]]:
+def fetch_fuelhh_wind_for_date(delivery_date: date) -> tuple[list[dict[str, Any]], str]:
     """
     Fetch all half-hourly WIND generation records for a single delivery date.
 
-    Query strategy (verified): FUELHH publishTime = startTime + 30 min, so:
-      - First SP1 (startTime 00:00) is published at 00:30
-      - Last SP48 (startTime 23:30) is published at 00:00 the next day
-    We pass fuelType=WIND for server-side filtering, and cache results.
-
-    Returns: list of records with keys:
-        startTime (str, UTC ISO-8601), settlementPeriod (int), generation (float, MW)
+    Returns:
+        tuple of (records, source_label) where source_label is one of:
+        - 'live_elexon': fetched live from data.elexon.co.uk
+        - 'fixture': loaded explicitly from local test fixtures
+        - 'fixture_fallback': live API call failed; fell back to local fixture
     """
     delivery_date_str = delivery_date.isoformat()
     if delivery_date_str in _FUELHH_CACHE:
         return _FUELHH_CACHE[delivery_date_str]
+
+    # Explicit fixture mode
+    if settings.use_fixtures:
+        fixture_path = _FIXTURES_DIR / "fuelhh_sample.json"
+        if fixture_path.exists():
+            records = json.loads(fixture_path.read_text(encoding="utf-8"))
+            wind_records = [
+                r for r in records
+                if r.get("fuelType") == "WIND" and r.get("settlementDate") == delivery_date_str
+            ]
+            result = (wind_records, "fixture")
+            _FUELHH_CACHE[delivery_date_str] = result
+            return result
 
     publish_from = datetime(
         delivery_date.year, delivery_date.month, delivery_date.day,
@@ -125,50 +117,53 @@ def fetch_fuelhh_wind_for_date(delivery_date: date) -> list[dict[str, Any]]:
 
     try:
         all_records = _fetch(FUELHH_URL, params)
-        _DATA_SOURCE_INFO["live_success_count"] += 1
+        source = "live_elexon"
     except Exception as exc:
         log.warning("Live FUELHH fetch failed (%s), attempting fixture fallback", exc)
-        _DATA_SOURCE_INFO["fallback_count"] += 1
-        _DATA_SOURCE_INFO["last_error"] = str(exc)
-        # Fallback to fixture if delivery_date is 2026-01-02 and fixture exists
-        from pathlib import Path
-        import json
-        fixture_path = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "fuelhh_sample.json"
+        fixture_path = _FIXTURES_DIR / "fuelhh_sample.json"
         if fixture_path.exists():
-            with open(fixture_path, "r", encoding="utf-8") as f:
-                all_records = json.load(f)
+            all_records = json.loads(fixture_path.read_text(encoding="utf-8"))
+            source = "fixture_fallback"
         else:
             raise
 
-    # Filter to WIND fuel type and the target settlement date only
     wind_records = [
         r for r in all_records
         if r.get("fuelType") == "WIND"
         and r.get("settlementDate") == delivery_date_str
     ]
 
-    log.info("FUELHH WIND for %s: %d records retrieved", delivery_date_str, len(wind_records))
-    _FUELHH_CACHE[delivery_date_str] = wind_records
-    return wind_records
+    log.info("FUELHH WIND for %s: %d records retrieved (%s)", delivery_date_str, len(wind_records), source)
+    result = (wind_records, source)
+    _FUELHH_CACHE[delivery_date_str] = result
+    return result
 
 
 # ---------------------------------------------------------------------------
 # WINDFOR — Wind forecasts
 # ---------------------------------------------------------------------------
 
-def fetch_windfor_published_on(publish_date: date) -> list[dict[str, Any]]:
+def fetch_windfor_published_on(publish_date: date) -> tuple[list[dict[str, Any]], str]:
     """
     Fetch all WINDFOR forecast records published on a given date (UTC).
 
-    Each record covers one hourly delivery interval and belongs to one publication run.
-    A single date typically contains 8 publication runs, each with ~73 delivery intervals.
-
-    Returns: list of records with keys:
-        publishTime (str, UTC ISO-8601), startTime (str, UTC ISO-8601), generation (float, MW)
+    Returns:
+        tuple of (records, source_label) where source_label is one of:
+        - 'live_elexon': fetched live from data.elexon.co.uk
+        - 'fixture': loaded explicitly from local test fixtures
+        - 'fixture_fallback': live API call failed; fell back to local fixture
     """
     publish_date_str = publish_date.isoformat()
     if publish_date_str in _WINDFOR_CACHE:
         return _WINDFOR_CACHE[publish_date_str]
+
+    if settings.use_fixtures:
+        fixture_path = _FIXTURES_DIR / "windfor_sample.json"
+        if fixture_path.exists():
+            records = json.loads(fixture_path.read_text(encoding="utf-8"))
+            result = (records, "fixture")
+            _WINDFOR_CACHE[publish_date_str] = result
+            return result
 
     publish_from = datetime(
         publish_date.year, publish_date.month, publish_date.day,
@@ -187,25 +182,22 @@ def fetch_windfor_published_on(publish_date: date) -> list[dict[str, Any]]:
 
     try:
         records = _fetch(WINDFOR_URL, params)
-        _DATA_SOURCE_INFO["live_success_count"] += 1
+        source = "live_elexon"
     except Exception as exc:
         log.warning("Live WINDFOR fetch failed (%s), attempting fixture fallback", exc)
-        _DATA_SOURCE_INFO["fallback_count"] += 1
-        _DATA_SOURCE_INFO["last_error"] = str(exc)
-        from pathlib import Path
-        import json
-        fixture_path = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "windfor_sample.json"
+        fixture_path = _FIXTURES_DIR / "windfor_sample.json"
         if fixture_path.exists():
-            with open(fixture_path, "r", encoding="utf-8") as f:
-                records = json.load(f)
+            records = json.loads(fixture_path.read_text(encoding="utf-8"))
+            source = "fixture_fallback"
         else:
             raise
 
     log.info(
-        "WINDFOR published on %s: %d records (%d unique runs)",
+        "WINDFOR published on %s: %d records (%s)",
         publish_date.isoformat(),
         len(records),
-        len(set(r.get("publishTime") for r in records)),
+        source,
     )
-    _WINDFOR_CACHE[publish_date_str] = records
-    return records
+    result = (records, source)
+    _WINDFOR_CACHE[publish_date_str] = result
+    return result

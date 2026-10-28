@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     http_connect_timeout: float = 10.0
     http_read_timeout: float = 30.0
 
+    # Deterministic offline fixtures mode (for testing / air-gapped evaluation)
+    use_fixtures: bool = Field(default=False, alias="USE_FIXTURES")
+
     model_config = ConfigDict(env_file=".env", populate_by_name=True)
 
 
