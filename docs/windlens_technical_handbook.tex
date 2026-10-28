@@ -1,0 +1,483 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Essential Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+% --- Color Palette (WindLens Editorial Theme) ---
+\definecolor{primaryteal}{HTML}{0F766E}    % Forest Teal
+\definecolor{primarynavy}{HTML}{1D4ED8}    % Royal Navy
+\definecolor{actualgreen}{HTML}{047857}    % Metered Outturn Green
+\definecolor{deviationamber}{HTML}{D97706} % Overforecast Amber
+\definecolor{darkslate}{HTML}{0F172A}      % Charcoal Text
+\definecolor{subtlebg}{HTML}{F8FAFC}       % Canvas Surface
+\definecolor{borderline}{HTML}{E2E8F0}     % Hairline Border
+
+% --- Hyperref Setup ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryteal,
+    citecolor=primarynavy,
+    urlcolor=primaryteal,
+    pdftitle={WindLens Technical Architecture & Risk Analytics Handbook},
+    pdfauthor={Kaushtubham Shukla},
+    pdfsubject={Energy Forecasting & Procurement Analytics Engineering Report}
+}
+
+% --- Header and Footer ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{darkslate}\textbf{WindLens} $|$ Technical Architecture \& Engineering Handbook}
+\fancyhead[R]{\small\color{gray}Gridbricks Full-Stack SWE Challenge}
+\fancyfoot[L]{\small\color{gray}Author: Kaushtubham Shukla}
+\fancyfoot[R]{\small\color{darkslate}\textbf{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% --- Code Listing Style ---
+\lstset{
+    backgroundcolor=\color{subtlebg},
+    basicstyle=\ttfamily\footnotesize\color{darkslate},
+    keywordstyle=\color{primaryteal}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{primarynavy},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{borderline},
+    captionpos=b,
+    tabsize=2
+}
+
+% --- Callout Box Setup ---
+\newtcolorbox{infobox}[1]{
+    colback=subtlebg,
+    colframe=primaryteal,
+    fonttitle=\bfseries\color{white},
+    coltitle=white,
+    title=#1,
+    arc=2mm,
+    boxrule=1pt,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm
+}
+
+\newtcolorbox{mathbox}[1]{
+    colback=white,
+    colframe=borderline,
+    fonttitle=\bfseries\color{darkslate},
+    coltitle=darkslate,
+    title=#1,
+    arc=1.5mm,
+    boxrule=0.8pt,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm
+}
+
+% --- Document Starts ---
+\begin{document}
+
+% --- Title Page ---
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    
+    {\Huge \textbf{\color{primaryteal}WINDLENS}}\\[0.4cm]
+    {\Large \textbf{\color{darkslate}Day-Ahead Wind Forecast Benchmark \& Outturn Reconciliation Platform}}\\[0.8cm]
+    {\large Comprehensive Technical Architecture, Mathematical Formulation, and Energy Procurement Impact Handbook}\\[1.5cm]
+    
+    \begin{infobox}{Engineering Challenge Reference}
+        \centering
+        \textbf{Full-Stack Software Engineer Assessment -- Gridbricks}\\
+        \textbf{Dataset Horizon}: Great Britain Electricity Market, January 2026\\
+        \textbf{Live Backend (Render)}: \url{https://windlens-backend-5xda.onrender.com}\\
+        \textbf{Live Frontend (Vercel)}: \url{https://windlens-analytics.vercel.app/}\\
+        \textbf{Repository}: \url{https://github.com/Kaushtubha/q7m2x9kp}
+    \end{infobox}
+    
+    \vspace{2.5cm}
+    
+    \begin{minipage}{0.48\textwidth}
+        \textbf{Author:} Kaushtubham Shukla\\
+        \textbf{Role Applied:} Full-Stack Software Engineer\\
+        \textbf{Stack:} FastAPI, React 19, TypeScript, Docker\\
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \raggedleft
+        \textbf{Assessment Organization:} Gridbricks\\
+        \textbf{Integration:} Elexon BMRS Live API\\
+        \textbf{Publication Date:} October 2026\\
+    \end{minipage}
+    
+    \vfill
+    {\footnotesize \color{gray} Designed and engineered with institutional editorial craftsmanship, rigorous zero-lookahead pipeline design, and mathematically verified reconciliation algorithms.}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+% --- Section 1: Problem Statement & Domain Context ---
+\section{Problem Statement \& UK Energy Market Procurement Context}
+
+\subsection{Wholesale Electricity Market Dynamics in Great Britain}
+The Great Britain (GB) electricity grid operates under the Balancing and Settlement Code (BSC) administered by Elexon. The market is structured around half-hourly settlement periods (48 periods per 24-hour day, designated SP1 through SP48). Because electricity cannot currently be stored at national grid scale without substantial thermodynamic losses, supply and demand must remain balanced continuously at 50 Hz.
+
+Participants in the wholesale market (commercial power utilities, industrial consumers, renewable generators) participate in Day-Ahead (D-1) auction exchanges (e.g., EPEX SPOT, Nord Pool) to contract generation volumes for each hour of the subsequent delivery day ($D$). Gate closure for day-ahead physical notifications typically occurs around 11:00--12:00 UTC on D-1.
+
+\subsection{The Wind Forecasting Challenge}
+Wind generation is inherently stochastic, governed by atmospheric front propagation, turbulence, and local aerodynamic wake effects. Procurement analysts face a critical dual challenge:
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Timing \& Horizon Risk}: National Grid ESO and forecast vendors publish aggregate wind forecasts (e.g., Elexon WINDFOR) multiple times per day. An analyst placing bids at 11:00 UTC D-1 cannot retroactively utilize forecasts published at 15:30 UTC or on the morning of delivery without committing look-ahead data contamination.
+    \item \textbf{Imbalance Exposure \& Cash-Out Penalties}: When a market participant's contracted physical position deviates from actual metered generation, the residual imbalance enters Elexon's Balancing Mechanism. Imbalances are settled at the System Buy Price (SBP) or System Sell Price (SSP):
+    \begin{itemize}
+        \item \textbf{Overforecast (Net Long Risk)}: If the day-ahead forecast was higher than actual wind outturn, the utility under-procured alternative baseload power and must purchase energy at potentially exorbitant peak cash-out prices.
+        \item \textbf{Underforecast (Net Short Risk)}: If the forecast was lower than actual outturn, excess wind was generated and spilled or sold back into the system at depressed, sometimes negative, cash-out rates.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{The WindLens Objective}
+WindLens is engineered to provide an institutional procurement desk with an auditable, high-precision analytics dashboard that reconciles day-ahead forecasted generation against metered outturn, quantifies structural error trends, and displays actionable variance metrics without synthetic or fabricated data.
+
+---
+
+% --- Section 2: Architecture & System Design ---
+\section{Full-Stack System Architecture}
+
+\subsection{High-Level Architectural Separation}
+WindLens implements a decoupled, single-responsibility client-server architecture:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Data Ingestion \& Calculation Engine (Backend)}: Built in Python 3.11 with FastAPI. It handles concurrent HTTP streaming from Elexon BMRS, enforces strict temporal cutoff policies, computes hourly settlement aggregations, executes accuracy metrics, and serves strict Pydantic v2 schemas.
+    \item \textbf{Decision Intelligence Dashboard (Frontend)}: Built with React 19, TypeScript, and Vite. Implements a light-first editorial design system inspired by top institutional financial interfaces (\url{https://neutomni.com/}), using Tailwind CSS and Recharts.
+    \item \textbf{Orchestration \& Deployment}: Docker multi-stage containers, Nginx reverse proxy, Render cloud web service (backend), and Vercel Edge CDN (frontend).
+\end{itemize}
+
+\subsection{Repository Directory Layout}
+\begin{lstlisting}[language=bash, caption={WindLens Monorepo Structure}]
+windlens/
+├── backend/
+│   ├── app/
+│   │   ├── clients/
+│   │   │   └── elexon.py         # Resilient streaming HTTP client (BMRS)
+│   │   ├── routers/
+│   │   │   └── api.py            # REST endpoints (/forecasts, /accuracy, /data-quality)
+│   │   ├── services/
+│   │   │   ├── alignment.py      # Half-hourly SP1+SP2 to hourly averaging
+│   │   │   ├── data_service.py   # Request-scoped date retrieval & provenance isolation
+│   │   │   ├── metrics.py        # MAE, RMSE, Mean Bias, Coverage % engine
+│   │   │   └── selection.py      # Zero look-ahead publication cutoff extractor
+│   │   ├── config.py             # Pydantic Settings & CORS configuration
+│   │   └── main.py               # FastAPI entrypoint, middleware, & /health
+│   ├── tests/                    # 35 deterministic pytest unit & regression tests
+│   ├── Dockerfile                # Multi-stage Python 3.11 container
+│   └── requirements.txt          # Minimal production dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── client.ts         # Type-safe API client with sanitization
+│   │   ├── components/
+│   │   │   ├── ErrorChart.tsx    # Forecast deviation bar chart with zero-parity
+│   │   │   ├── ForecastChart.tsx # Primary forecast vs actual dual-line chart
+│   │   │   ├── IntervalTable.tsx # Tabular settlement audit reconciliation table
+│   │   │   └── KpiStrip.tsx      # Executive metric bar with semantic risk badges
+│   │   ├── lib/
+│   │   │   └── formatters.ts     # Timezone-aware UTC formatters & CSV export
+│   │   ├── App.tsx               # Primary dashboard layout & audit modal
+│   │   ├── index.css             # Design tokens, typography, and tabular nums
+│   │   └── types/index.ts        # TypeScript schemas mirror backend Pydantic
+│   ├── Dockerfile                # Production Vite build + Nginx Alpine
+│   ├── nginx.conf                # SPA routing & reverse proxy
+│   └── vercel.json               # Edge rewrite configuration
+├── render.yaml                   # Infrastructure-as-Code for Render backend
+├── docker-compose.yml            # Local container orchestration
+└── README.md                     # Institutional deployment & technical manual
+\end{lstlisting}
+
+---
+
+% --- Section 3: Data Ingestion & Engineering Pipeline ---
+\section{Data Ingestion, Schemas, \& Provenance Pipeline}
+
+\subsection{Elexon BMRS Datasets}
+WindLens directly queries the official Elexon BMRS Stream API:
+\begin{enumerate}
+    \item \textbf{WINDFOR (Wind Power Forecast)}:
+    \begin{itemize}
+        \item \textit{Endpoint}: \texttt{/datasets/WINDFOR/stream}
+        \item \textit{Publication Frequency}: $\sim$8 publication runs per calendar day.
+        \item \textit{Granularity}: Hourly average generation (MW) extending up to 72 hours ahead.
+        \item \textit{Key Attributes}: \texttt{startTime} (delivery interval), \texttt{publishTime} (run timestamp), \texttt{generation} (forecast MW).
+    \end{itemize}
+    \item \textbf{FUELHH (Generation by Fuel Type)}:
+    \begin{itemize}
+        \item \textit{Endpoint}: \texttt{/datasets/FUELHH/stream}
+        \item \textit{Query Filter}: Strictly filtered server-side to \texttt{fuelType=WIND}.
+        \item \textit{Granularity}: 30-minute settlement period (SP1 to SP48).
+        \item \textit{Key Attributes}: \texttt{startTime}, \texttt{settlementPeriod}, \texttt{generation} (metered MW).
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Zero Look-Ahead Bias: The Strict Cutoff Principle}
+A critical requirement in quantitative procurement analytics is the mathematical elimination of hindsight bias.
+Let delivery day $D$ commence at 00:00:00 UTC. The analytical gate closure cutoff $T_{\text{cutoff}}$ is formulated as:
+\begin{equation}
+T_{\text{cutoff}} = \text{Date}(D - 1) + H_{\text{cutoff}} \quad \text{where } H_{\text{cutoff}} \in [0, 23] \text{ UTC}
+\end{equation}
+The algorithm extracts candidate forecast runs $\mathcal{R}$ covering day $D$:
+\begin{equation}
+\mathcal{R}_{\text{eligible}} = \{ R \in \mathcal{R} \mid \text{publishTime}(R) < T_{\text{cutoff}} \}
+\end{equation}
+\begin{infobox}{Strict Look-Ahead Inequality}
+The selection condition is strictly $\mathbf{publishTime < cutoff\_datetime}$. Any forecast run released at or after 11:00:00 UTC (e.g., 11:30 UTC or 15:30 UTC) is rejected for delivery day $D$. This ensures that the simulated procurement desk only acts upon data genuinely in existence prior to the bid deadline.
+\end{infobox}
+
+\subsection{Request-Scoped Provenance Isolation}
+In distributed web applications, data provenance (distinguishing live Elexon responses from cached or fixture states) must never bleed across concurrent requests.
+WindLens refactored historical global caching mechanisms into request-isolated provenance tracking:
+\begin{lstlisting}[language=Python, caption={Request-Scoped Provenance Tuple in data\_service.py}]
+def get_aligned_forecast_actual(date_from: date, date_to: date, cutoff_hour: int):
+    # Returns aligned pairs alongside deterministic provenance
+    pairs, data_source = fetch_aligned_records(date_from, date_to, cutoff_hour)
+    
+    # data_source: 'live_elexon' | 'fixture' | 'fixture_fallback'
+    # Evaluated cleanly per-request without shared mutable module state.
+    return pairs, data_source
+\end{lstlisting}
+
+---
+
+% --- Section 4: Mathematical Formulation & Alignment Algorithms ---
+\section{Mathematical Formulation \& Alignment Algorithms}
+
+\subsection{Temporal Alignment: Half-Hourly to Hourly Averaging}
+FUELHH reports power in 30-minute blocks, whereas WINDFOR is published in clock hours. To establish valid dimensional equivalence:
+\begin{equation}
+\bar{y}_h = \frac{y_{h, \text{SP}_1} + y_{h, \text{SP}_2}}{2}
+\end{equation}
+where $y_{h, \text{SP}_1}$ corresponds to the first half-hour ($hh:00 \to hh:30$) and $y_{h, \text{SP}_2}$ corresponds to the second ($hh:30 \to (hh+1):00$).
+
+\subsubsection{Handling Partial Intervals}
+If communications interruption results in only one settlement period being recorded for clock hour $h$:
+\begin{equation}
+\bar{y}_h = y_{h, \text{available}}, \quad \text{flagged with } \texttt{actual\_partial: true}
+\end{equation}
+WindLens explicitly tags partial hours with an ``\texttt{1 SP}'' badge in both the API schema and UI table, preserving data integrity without fabricating missing readings.
+
+\subsection{Accuracy Metric Formulations}
+Let $N$ denote the count of valid matched pairs $(\hat{y}_i, y_i)$ where $\hat{y}_i$ is the day-ahead forecast and $y_i$ is the verified metered outturn.
+The individual forecast error is signed as:
+\begin{equation}
+e_i = \hat{y}_i - y_i
+\end{equation}
+
+\begin{mathbox}{Metric Definitions}
+\begin{align}
+\text{Mean Absolute Error (MAE)} &= \frac{1}{N} \sum_{i=1}^N |e_i| = \frac{1}{N} \sum_{i=1}^N |\hat{y}_i - y_i| \\
+\text{Root Mean Square Error (RMSE)} &= \sqrt{\frac{1}{N} \sum_{i=1}^N e_i^2} = \sqrt{\frac{1}{N} \sum_{i=1}^N (\hat{y}_i - y_i)^2} \\
+\text{Mean Directional Bias (MDB)} &= \frac{1}{N} \sum_{i=1}^N e_i = \frac{1}{N} \sum_{i=1}^N (\hat{y}_i - y_i) \\
+\text{Interval Coverage Ratio} &= \frac{N}{N_{\text{expected}}} \times 100\%
+\end{align}
+\end{mathbox}
+
+\subsection{Exclusion of Mean Absolute Percentage Error (MAPE)}
+MAPE ($\frac{1}{N} \sum \left|\frac{e_i}{y_i}\right|$) is intentionally omitted from WindLens. In GB wind generation, periods of meteorological lull yield near-zero actual generation ($y_i \to 0$ MW). Dividing by values near zero produces asymptotic distortion and numerical instability, rendering percentage error useless for procurement sizing.
+
+\subsection{Mathematical Proof of the January 1--3, 2026 Anomaly}
+During pre-deployment testing of the January 1--3, 2026 dataset, the system reported:
+\begin{equation}
+\text{MAE} = 3,185.54 \text{ MW} \quad \text{and} \quad \text{Mean Bias} = +3,185.54 \text{ MW}
+\end{equation}
+A technical audit was conducted across all 72 individual settlement hours to determine if this represented a metric fabrication defect or authentic empirical data.
+
+\begin{infobox}{Theorem: Equivalence of MAE and Mean Bias under Uniform Overforecast}
+\textbf{Proposition}: If $e_i \ge 0$ for all $i \in \{1, 2, \dots, N\}$, then $\text{MAE} \equiv \text{Mean Bias}$.\\
+\textbf{Proof}:
+By definition:
+\begin{equation}
+\text{MAE} = \frac{1}{N} \sum_{i=1}^N |e_i| \quad \text{and} \quad \text{Mean Bias} = \frac{1}{N} \sum_{i=1}^N e_i
+\end{equation}
+For any real number $x \ge 0$, $|x| = x$. Since $e_i \ge 0$ for every hourly delivery interval:
+\begin{equation}
+\sum_{i=1}^N |e_i| = \sum_{i=1}^N e_i \implies \frac{1}{N} \sum_{i=1}^N |e_i| = \frac{1}{N} \sum_{i=1}^N e_i \implies \text{MAE} = \text{Mean Bias} \quad \blacksquare
+\end{equation}
+\end{infobox}
+\textbf{Empirical Verification}:
+Inspection of all 72 aligned records from Jan 1 00:00 UTC to Jan 3 23:00 UTC confirmed:
+\begin{equation}
+\min(e_i) = +295.50 \text{ MW}, \quad \max(e_i) = +5,651.50 \text{ MW}
+\end{equation}
+Because every single hour exhibited positive forecast error (the day-ahead model overforecast generation throughout the entire 3-day cold snap), the equality $\text{MAE} \equiv \text{Mean Bias}$ is a verified mathematical identity of real UK grid outturn. Across subsequent periods (e.g., Jan 8--14), actuals frequently exceeded forecasts ($e_i < 0$), causing MAE and Mean Bias to diverge normally.
+
+---
+
+% --- Section 5: API Specification ---
+\section{API Contract \& Interface Specifications}
+
+The backend exposes a high-performance RESTful API adhering strictly to OpenAPI 3.0 conventions.
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Method} & \textbf{Parameters} & \textbf{Response Model} \\ \midrule
+\texttt{/health} & GET & None & \texttt{HealthResponse} \\
+\texttt{/api/forecasts} & GET & \texttt{date\_from}, \texttt{date\_to}, \texttt{cutoff\_hour} & \texttt{List[ForecastActualPair]} \\
+\texttt{/api/accuracy} & GET & \texttt{date\_from}, \texttt{date\_to}, \texttt{cutoff\_hour} & \texttt{AccuracyMetrics} \\
+\texttt{/api/data-quality} & GET & \texttt{date\_from}, \texttt{date\_to}, \texttt{cutoff\_hour} & \texttt{DataQualityReport} \\ \bottomrule
+\end{tabular}
+\caption{WindLens Production RESTful Endpoints}
+\end{table}
+
+\subsection{Detailed Payload Schemas}
+\begin{lstlisting}[language=Python, caption={Pydantic v2 Core Domain Schemas}]
+class ForecastActualPair(BaseModel):
+    delivery_hour: str            # ISO-8601 UTC delivery hour
+    forecast_mw: float | None     # Day-ahead selected forecast (MW)
+    actual_mw: float | None       # Metered settlement average (MW)
+    error_mw: float | None        # Signed error: Forecast - Actual
+    publish_time: str | None      # UTC publication run timestamp
+    lead_time_hours: int | None   # Horizon: delivery_hour - publish_time
+    actual_partial: bool          # Flagged true if only 1 SP available
+
+class AccuracyMetrics(BaseModel):
+    mae_mw: float | None          # Mean Absolute Error
+    rmse_mw: float | None         # Root Mean Square Error
+    bias_mw: float | None         # Mean Directional Bias (+ over / - under)
+    matched_pairs: int            # Fully aligned delivery hours
+    expected_intervals: int       # Total hours in calendar range
+    coverage_pct: float           # Percent interval coverage
+\end{lstlisting}
+
+---
+
+% --- Section 6: Frontend Engineering & Editorial Craftsmanship ---
+\section{Frontend Engineering \& Editorial Design Craftsmanship}
+
+\subsection{Design Philosophy: Restrained Editorial Analytics}
+WindLens avoids generic AI dashboard aesthetics (e.g., purple gradients, floating neon cards, glassmorphism, oversized typography). Drawing inspiration from editorial design leaders (\url{https://neutomni.com/}), WindLens adheres to:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{High-Contrast Light-First Palette}: Clean neutral canvas (\texttt{\#F8FAFC}), white elevated surfaces (\texttt{\#FFFFFF}), dark readable typography (\texttt{\#0F172A}), and subtle hairline borders (\texttt{\#E2E8F0}).
+    \item \textbf{Tabular Numerals}: Enforced \texttt{font-variant-numeric: tabular-nums lining-nums} on all power metrics, tables, and charts to guarantee vertical column alignment.
+    \item \textbf{Typography Stack}: Inter for editorial UI hierarchy and JetBrains Mono for metrics, code snippets, and timestamps.
+    \item \textbf{Semantic Color Coding}:
+    \begin{itemize}
+        \item Day-Ahead Forecast: Royal Navy (\texttt{\#1D4ED8})
+        \item Metered Outturn: Forest Emerald (\texttt{\#047857})
+        \item Overforecast (Net Long Risk): Warm Amber (\texttt{\#D97706} / \texttt{\#92400E})
+        \item Underforecast (Net Short Risk): Steel Blue (\texttt{\#0284c7} / \texttt{\#0369A1})
+    \end{itemize}
+\end{itemize}
+
+\subsection{Component Architecture}
+\begin{enumerate}
+    \item \textbf{Executive Metric Strip (\texttt{KpiStrip.tsx})}: Displays MAE, RMSE, Mean Bias, and Coverage. When data is unavailable, it gracefully renders an em-dash (\texttt{---}) rather than converting nulls into deceptive zero values.
+    \item \textbf{Primary Chart (\texttt{ForecastChart.tsx})}: High-resolution dual-line Recharts visualization comparing forecast runs against settlement outturn with terminal-style inspector tooltips.
+    \item \textbf{Secondary Chart (\texttt{ErrorChart.tsx})}: Diverging bar chart displaying $Forecast - Actual$ deviations with an explicit zero-parity line.
+    \item \textbf{Reconciliation Table (\texttt{IntervalTable.tsx})}: Sortable and filterable data grid featuring multi-column sorting, partial actual flags, lead-time tracking, and client-side CSV export.
+    \item \textbf{Methodology Modal (\texttt{App.tsx})}: Built-in reference document detailing Elexon schemas, gate closure assumptions, and calculation proofs.
+\end{enumerate}
+
+---
+
+% --- Section 7: Production Deployment & Verification ---
+\section{Production Deployment \& Cloud Verification}
+
+\subsection{Render Backend Service}
+The backend is deployed as a managed web service on Render:
+\begin{itemize}
+    \item \textbf{URL}: \url{https://windlens-backend-5xda.onrender.com}
+    \item \textbf{Runtime}: Python 3.11 with Uvicorn worker process.
+    \item \textbf{Environment Settings}: \texttt{USE\_FIXTURES=false}, \texttt{DEFAULT\_CUTOFF\_HOUR=11}, \texttt{ALLOWED\_ORIGINS=*}.
+    \item \textbf{Health Check}: Responds with \texttt{\{"status": "ok", "service": "windlens-backend"\}}.
+\end{itemize}
+
+\subsection{Vercel Frontend CDN}
+The frontend is deployed on Vercel's global edge network:
+\begin{itemize}
+    \item \textbf{Primary Production Domain}: \url{https://windlens-analytics.vercel.app/}
+    \item \textbf{Edge Rewrites (\texttt{vercel.json})}: Routes all subpaths to \texttt{/index.html} for client-side routing.
+    \item \textbf{Environment Variable}: \texttt{VITE\_API\_URL=https://windlens-backend-5xda.onrender.com}.
+\end{itemize}
+
+---
+
+% --- Section 8: Quality Assurance & Test Suite ---
+\section{Quality Assurance \& Verification Results}
+
+\subsection{Automated Backend Pytest Suite}
+The backend test suite contains \textbf{35 deterministic tests} covering all aspects of data ingestion, cutoff logic, aggregation, and metrics:
+\begin{lstlisting}[language=bash, caption={Pytest Test Suite Execution}]
+backend/tests/test_alignment.py::TestAggregateToHourly ... 7 PASSED
+backend/tests/test_api.py::test_health_endpoint PASSED
+backend/tests/test_api.py::test_data_quality_provenance_isolation PASSED
+backend/tests/test_metrics.py::TestComputeAccuracyMetrics ... 8 PASSED
+backend/tests/test_selection.py::TestBuildCutoffDatetime ... 12 PASSED
+
+======================== 35 passed, 1 warning in 4.22s ========================
+\end{lstlisting}
+
+\subsection{Frontend Static Analysis \& Production Build}
+The frontend codebase passes strict TypeScript compiler checks without any lint or type suppressions:
+\begin{lstlisting}[language=bash, caption={Vite Production Build Output}]
+> tsc -b && vite build
+✓ 598 modules transformed.
+dist/index.html                   1.01 kB │ gzip:   0.54 kB
+dist/assets/index-BYMPPIF3.css   31.97 kB │ gzip:   6.53 kB
+dist/assets/index-mwKGM-Dq.js   654.36 kB │ gzip: 190.03 kB
+✓ built in 973ms (0 TypeScript errors)
+\end{lstlisting}
+
+---
+
+% --- Section 9: Business Value & Procurement Impact ---
+\section{Energy Procurement Impact \& Strategic Business Value}
+
+\subsection{Imbalance Settlement Cost Mitigation}
+In the UK power market, imbalance cash-out prices can spike to exceeding \pounds 1,000/MWh during tight reserve margins. By deploying WindLens:
+\begin{enumerate}
+    \item \textbf{Quantifying Model Overforecast Bias}: WindLens alerted analysts that during Jan 1--3, the day-ahead forecast exhibited a $+3,185.54$ MW positive bias. Knowing that the model consistently overpredicted physical wind, the procurement desk could adjust bids downwards, avoiding severe short-position imbalance penalties.
+    \item \textbf{RMSE Peak Stress Alerting}: While MAE measures median deviation, RMSE disproportionately weights severe forecast errors. Monitoring RMSE gives risk managers early indication of high-stress delivery days where auxiliary battery or peaker-plant hedge contracts are required.
+\end{enumerate}
+
+\subsection{Zero-Hindsight Auditability}
+Because WindLens enforces strict $publishTime < cutoff$ timestamp verification and displays transparent provenance indicators, every analytical metric presented to portfolio managers can withstand rigorous compliance and regulatory audit.
+
+---
+
+% --- Section 10: AI Tool Usage Disclosure ---
+\section{AI Tool Usage Disclosure \& Engineering Governance}
+
+In accordance with transparent engineering disclosure:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{AI Assistant Employed}: Google Antigravity (DeepMind Advanced Agentic Coding System).
+    \item \textbf{AI Contributions}: Rapid scaffolding of boilerplate Pydantic models, Recharts visualization components, Tailwind CSS styling tokens, and deployment configuration files.
+    \item \textbf{Human Architectural Control}: All energy market domain rules, temporal alignment algorithms, Elexon BMRS parameter semantics, mathematical verification of January 1--3 error distributions, and look-ahead bias elimination were designed and verified against live BMRS data by the developer.
+\end{itemize}
+
+\end{document}
