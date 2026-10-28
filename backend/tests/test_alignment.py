@@ -74,3 +74,17 @@ class TestAggregateToHourly:
         records = load_fuelhh_fixture()  # has 3 hours worth (SP1–SP6)
         result = aggregate_fuelhh_to_hourly(records)
         assert len(result) == 3  # hours 00:00, 01:00, 02:00
+
+    def test_duplicate_settlement_period_deduplicated(self):
+        """Duplicate records for the same half-hour slot must not distort the average."""
+        records = [
+            {"startTime": "2026-01-02T00:00:00Z", "generation": 10000, "fuelType": "WIND"},
+            {"startTime": "2026-01-02T00:00:00Z", "generation": 10000, "fuelType": "WIND"},  # duplicate
+            {"startTime": "2026-01-02T00:30:00Z", "generation": 12000, "fuelType": "WIND"},
+        ]
+        result = aggregate_fuelhh_to_hourly(records)
+        hour_0 = datetime(2026, 1, 2, 0, 0, 0, tzinfo=timezone.utc)
+        assert hour_0 in result
+        assert result[hour_0].actual_mw == 11000.0  # (10000 + 12000) / 2, not (10000+10000+12000)/3
+        assert result[hour_0].partial is False
+

@@ -1,4 +1,14 @@
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  ResponsiveContainer,
+} from 'recharts';
 import type { ForecastActualPair } from '../types';
 import { formatHourOnly } from '../lib/formatters';
 
@@ -10,23 +20,36 @@ interface ErrorChartProps {
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
+  if (!d) return null;
   const error = d.error_mw as number;
+
   return (
-    <div className="rounded-lg border border-[#2a3148] bg-[#0f1117] p-3 text-xs shadow-xl">
-      <p className="mb-1 font-semibold text-[#e8eaf0]">{d.fullHour} UTC</p>
-      <p className={error > 0 ? 'text-orange-400' : 'text-cyan-400'}>
-        Error: {error > 0 ? '+' : ''}{error.toLocaleString()} MW
+    <div className="rounded border border-slate-200 bg-white p-3 text-xs shadow-md space-y-1">
+      <p className="font-semibold text-slate-900 border-b border-slate-100 pb-1">
+        {d.fullHour.replace('T', ' ').slice(0, 16)} UTC
       </p>
-      <p className="text-[#7a839a] mt-1">{error > 0 ? 'Overforecast' : 'Underforecast'}</p>
+      <div className="flex items-center justify-between gap-4">
+        <span className="text-slate-600">Deviation:</span>
+        <span className={`font-mono tabular-nums font-semibold ${error > 0 ? 'text-amber-800' : 'text-sky-800'}`}>
+          {error > 0 ? '+' : ''}{error.toLocaleString()} MW
+        </span>
+      </div>
+      <p className="text-[11px] text-slate-500 pt-0.5">
+        {error > 0
+          ? 'Overforecast (Actual wind lower than procurement bid)'
+          : 'Underforecast (Actual wind higher than procurement bid)'}
+      </p>
     </div>
   );
 }
 
 export function ErrorChart({ data, loading }: ErrorChartProps) {
-  if (loading) return <div className="h-56 animate-pulse rounded-lg bg-[#1a1f2e]" />;
+  if (loading) {
+    return <div className="h-56 animate-pulse rounded-lg bg-slate-100 border border-slate-200" />;
+  }
 
   const chartData = data
-    .filter((d) => d.error_mw != null)
+    .filter((d) => d.error_mw !== null)
     .map((d) => ({
       hour: formatHourOnly(d.delivery_hour),
       fullHour: d.delivery_hour,
@@ -35,43 +58,57 @@ export function ErrorChart({ data, loading }: ErrorChartProps) {
 
   if (!chartData.length) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-lg border border-[#2a3148] bg-[#1a1f2e] text-[#7a839a]">
-        No error data for selected range.
+      <div className="flex h-56 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs text-slate-500">
+        No paired forecast/actual intervals available for error analysis.
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-[#2a3148] bg-[#1a1f2e] p-4">
-      <h3 className="mb-1 text-sm font-semibold text-[#e8eaf0]">Hourly Forecast Error</h3>
-      <p className="mb-4 text-xs text-[#7a839a]">
-        Error = forecast − actual (MW). <span className="text-orange-400">Orange = overforecast</span>,{' '}
-        <span className="text-cyan-400">teal = underforecast</span>.
-      </p>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={chartData} margin={{ top: 4, right: 16, left: 10, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2a3148" vertical={false} />
+    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-2xs">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">Hourly Forecast Deviation</h3>
+          <p className="text-xs text-slate-500">
+            Error = Day-Ahead Forecast − Metered Actual (MW).
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-slate-600">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-xs bg-amber-600 inline-block" />
+            <span>Overforecast (+)</span>
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-xs bg-sky-600 inline-block" />
+            <span>Underforecast (−)</span>
+          </span>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={chartData} margin={{ top: 8, right: 16, left: 10, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
           <XAxis
             dataKey="hour"
-            tick={{ fill: '#7a839a', fontSize: 10 }}
+            tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#2a3148' }}
+            axisLine={{ stroke: '#cbd5e1' }}
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: '#7a839a', fontSize: 10 }}
+            tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
-            width={60}
+            width={65}
             tickFormatter={(v) => `${v > 0 ? '+' : ''}${(v / 1000).toFixed(1)}k`}
           />
           <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine y={0} stroke="#2a3148" strokeWidth={1} />
-          <Bar dataKey="error_mw" radius={[2, 2, 0, 0]} isAnimationActive={false}>
+          <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={1} strokeDasharray="2 2" />
+          <Bar dataKey="error_mw" radius={[1, 1, 0, 0]} isAnimationActive={false}>
             {chartData.map((entry, index) => (
               <Cell
                 key={`cell-${index}`}
-                fill={entry.error_mw > 0 ? '#fb923c' : '#22d3ee'}
+                fill={entry.error_mw > 0 ? '#d97706' : '#0284c7'}
               />
             ))}
           </Bar>

@@ -34,6 +34,29 @@ _MAX_RESPONSE_BYTES = 50 * 1024 * 1024
 _FUELHH_CACHE: dict[str, list[dict[str, Any]]] = {}
 _WINDFOR_CACHE: dict[str, list[dict[str, Any]]] = {}
 
+# Transparent provenance tracking
+_DATA_SOURCE_INFO: dict[str, Any] = {
+    "live_success_count": 0,
+    "fallback_count": 0,
+    "last_error": None,
+}
+
+
+def get_current_data_source() -> str:
+    """Return the observed data source label for honest reporting."""
+    if _DATA_SOURCE_INFO["fallback_count"] > 0:
+        if _DATA_SOURCE_INFO["live_success_count"] > 0:
+            return "fixture_fallback"
+        return "fixture"
+    return "live_elexon"
+
+
+def reset_data_source_tracking() -> None:
+    """Reset provenance tracking counters (useful for test isolation)."""
+    _DATA_SOURCE_INFO["live_success_count"] = 0
+    _DATA_SOURCE_INFO["fallback_count"] = 0
+    _DATA_SOURCE_INFO["last_error"] = None
+
 
 def _make_client() -> httpx.Client:
     return httpx.Client(
@@ -102,8 +125,11 @@ def fetch_fuelhh_wind_for_date(delivery_date: date) -> list[dict[str, Any]]:
 
     try:
         all_records = _fetch(FUELHH_URL, params)
+        _DATA_SOURCE_INFO["live_success_count"] += 1
     except Exception as exc:
         log.warning("Live FUELHH fetch failed (%s), attempting fixture fallback", exc)
+        _DATA_SOURCE_INFO["fallback_count"] += 1
+        _DATA_SOURCE_INFO["last_error"] = str(exc)
         # Fallback to fixture if delivery_date is 2026-01-02 and fixture exists
         from pathlib import Path
         import json
@@ -161,8 +187,11 @@ def fetch_windfor_published_on(publish_date: date) -> list[dict[str, Any]]:
 
     try:
         records = _fetch(WINDFOR_URL, params)
+        _DATA_SOURCE_INFO["live_success_count"] += 1
     except Exception as exc:
         log.warning("Live WINDFOR fetch failed (%s), attempting fixture fallback", exc)
+        _DATA_SOURCE_INFO["fallback_count"] += 1
+        _DATA_SOURCE_INFO["last_error"] = str(exc)
         from pathlib import Path
         import json
         fixture_path = Path(__file__).parent.parent.parent / "tests" / "fixtures" / "windfor_sample.json"

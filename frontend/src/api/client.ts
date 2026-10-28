@@ -10,6 +10,9 @@ const BASE = import.meta.env.VITE_API_URL ?? '';
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
   if (!res.ok) {
+    if (res.status === 404) {
+      return null as unknown as T;
+    }
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API error ${res.status}: ${text}`);
   }

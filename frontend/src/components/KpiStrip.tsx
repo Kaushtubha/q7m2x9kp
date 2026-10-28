@@ -1,33 +1,6 @@
 import type { AccuracyMetrics } from '../types';
 import { formatMW, formatMWWithSign } from '../lib/formatters';
 
-interface MetricCardProps {
-  label: string;
-  value: string;
-  tooltip: string;
-  highlight?: 'positive' | 'negative' | 'neutral';
-}
-
-function MetricCard({ label, value, tooltip, highlight = 'neutral' }: MetricCardProps) {
-  const valueColor =
-    highlight === 'positive'
-      ? 'text-emerald-400'
-      : highlight === 'negative'
-      ? 'text-orange-400'
-      : 'text-blue-300';
-
-  return (
-    <div
-      className="rounded-lg border border-[#2a3148] bg-[#1a1f2e] p-4"
-      title={tooltip}
-    >
-      <p className="text-xs font-medium uppercase tracking-wider text-[#7a839a]">{label}</p>
-      <p className={`mt-1 text-2xl font-semibold tabular-nums ${valueColor}`}>{value}</p>
-      <p className="mt-1 text-xs text-[#7a839a] leading-tight">{tooltip}</p>
-    </div>
-  );
-}
-
 interface KpiStripProps {
   metrics: AccuracyMetrics | null;
   loading: boolean;
@@ -36,51 +9,113 @@ interface KpiStripProps {
 export function KpiStrip({ metrics, loading }: KpiStripProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 rounded-lg border border-slate-200 bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-lg bg-[#1a1f2e]" />
+          <div key={i} className="p-4 space-y-2 animate-pulse">
+            <div className="h-3 w-16 bg-slate-200 rounded" />
+            <div className="h-7 w-28 bg-slate-200 rounded" />
+            <div className="h-3 w-36 bg-slate-100 rounded" />
+          </div>
         ))}
       </div>
     );
   }
 
-  if (!metrics) {
-    return (
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-24 rounded-lg border border-[#2a3148] bg-[#1a1f2e]" />
-        ))}
-      </div>
-    );
-  }
-
-  const biasHighlight: 'positive' | 'negative' | 'neutral' =
-    metrics.bias_mw > 200 ? 'negative' : metrics.bias_mw < -200 ? 'positive' : 'neutral';
+  const isAvailable = metrics !== null && metrics.matched_pairs > 0;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <MetricCard
-        label="MAE"
-        value={formatMW(metrics.mae_mw)}
-        tooltip="Mean Absolute Error — average magnitude of forecast error (MW). Lower is better."
-      />
-      <MetricCard
-        label="RMSE"
-        value={formatMW(metrics.rmse_mw)}
-        tooltip="Root Mean Squared Error — penalises large errors more than MAE (MW)."
-      />
-      <MetricCard
-        label="Mean Bias"
-        value={formatMWWithSign(metrics.bias_mw)}
-        tooltip="Average forecast − actual (MW). Positive = systematic overforecast."
-        highlight={biasHighlight}
-      />
-      <MetricCard
-        label="Coverage"
-        value={`${metrics.coverage_pct.toFixed(1)}%`}
-        tooltip={`${metrics.matched_pairs} of ${metrics.expected_intervals} intervals have both forecast and actual.`}
-        highlight={metrics.coverage_pct >= 90 ? 'positive' : metrics.coverage_pct < 70 ? 'negative' : 'neutral'}
-      />
+    <div className="rounded-lg border border-slate-200 bg-white shadow-2xs divide-y sm:divide-y-0 sm:divide-x divide-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {/* MAE Block */}
+      <div className="p-4 flex flex-col justify-between">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Mean Absolute Error
+          </span>
+          <div className="mt-1 flex items-baseline">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+              {isAvailable ? formatMW(metrics.mae_mw).replace(' MW', '') : '—'}
+            </span>
+            {isAvailable && <span className="ml-1 text-xs font-medium text-slate-500">MW</span>}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 leading-tight">
+          Average absolute error magnitude across all matched delivery intervals.
+        </p>
+      </div>
+
+      {/* RMSE Block */}
+      <div className="p-4 flex flex-col justify-between">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Root Mean Sq Error
+          </span>
+          <div className="mt-1 flex items-baseline">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+              {isAvailable ? formatMW(metrics.rmse_mw).replace(' MW', '') : '—'}
+            </span>
+            {isAvailable && <span className="ml-1 text-xs font-medium text-slate-500">MW</span>}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 leading-tight">
+          Penalises large deviations; key proxy for grid reserve stress.
+        </p>
+      </div>
+
+      {/* Mean Bias Block */}
+      <div className="p-4 flex flex-col justify-between">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Mean Bias
+          </span>
+          <div className="mt-1 flex items-baseline">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+              {isAvailable ? formatMWWithSign(metrics.bias_mw).replace(' MW', '') : '—'}
+            </span>
+            {isAvailable && <span className="ml-1 text-xs font-medium text-slate-500">MW</span>}
+          </div>
+        </div>
+        {isAvailable && metrics.bias_mw !== null ? (
+          <div className="mt-2">
+            {metrics.bias_mw > 100 ? (
+              <span className="inline-flex items-center text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded">
+                Overforecast (Net Long Risk)
+              </span>
+            ) : metrics.bias_mw < -100 ? (
+              <span className="inline-flex items-center text-[11px] font-medium text-sky-800 bg-sky-50 border border-sky-200/80 px-1.5 py-0.5 rounded">
+                Underforecast (Net Short Risk)
+              </span>
+            ) : (
+              <span className="inline-flex items-center text-[11px] font-medium text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                Neutral Directional Bias
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 text-xs text-slate-500">No paired data in range.</p>
+        )}
+      </div>
+
+      {/* Interval Coverage Block */}
+      <div className="p-4 flex flex-col justify-between">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Interval Coverage
+          </span>
+          <div className="mt-1 flex items-baseline">
+            <span className="text-2xl font-bold tracking-tight text-slate-900 tabular-nums">
+              {isAvailable ? `${metrics.coverage_pct.toFixed(1)}%` : '—'}
+            </span>
+            {isAvailable && (
+              <span className="ml-2 text-xs text-slate-500">
+                ({metrics.matched_pairs} / {metrics.expected_intervals} hrs)
+              </span>
+            )}
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-500 leading-tight">
+          Delivery hours with both eligible forecast and actual generation.
+        </p>
+      </div>
     </div>
   );
 }

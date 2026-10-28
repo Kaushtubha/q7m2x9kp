@@ -44,10 +44,13 @@ def aggregate_fuelhh_to_hourly(fuelhh_records: list[dict[str, Any]]) -> dict[dat
     Input records must already be filtered to fuelType == 'WIND' and the
     target settlementDate.
 
+    Handles duplicate settlement-period records deterministically by slot
+    (0 for 00-30m, 1 for 30-60m).
+
     Returns: dict mapping hour_start (UTC datetime) -> HourlyActual
     """
-    # Group records by the hour their startTime falls in (floor to :00)
-    hourly_buckets: dict[datetime, list[float]] = {}
+    # Group records by hour_start -> {slot: generation} where slot is 0 or 1
+    hourly_slots: dict[datetime, dict[int, float]] = {}
 
     for record in fuelhh_records:
         start_str = record.get("startTime", "")
@@ -57,33 +60,30 @@ def aggregate_fuelhh_to_hourly(fuelhh_records: list[dict[str, Any]]) -> dict[dat
             continue
         try:
             start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
-            generation = float(generation)
+            gen_val = float(generation)
         except (ValueError, AttributeError, TypeError):
             log.warning("Invalid FUELHH record: %r", record)
             continue
 
-        # Floor to the nearest hour (e.g., 00:30 → 00:00)
+        # Floor to the target delivery hour (e.g., 00:30 -> 00:00)
         hour_start = start_dt.replace(minute=0, second=0, microsecond=0)
-        hourly_buckets.setdefault(hour_start, []).append(generation)
+        slot = 0 if start_dt.minute < 30 else 1
+
+        # Deduplicate: if duplicate record for the same half-hour slot arrives, keep latest valid reading
+        hourly_slots.setdefault(hour_start, {})[slot] = gen_val
 
     result: dict[datetime, HourlyActual] = {}
-    for hour_start, readings in hourly_buckets.items():
-        if len(readings) == 1:
-            # Only one of the two expected HH records is present — flag as partial
-            actual_mw = readings[0]
-            partial = True
-            log.debug("Partial actual for hour %s: single reading %.1f MW", hour_start, actual_mw)
-        elif len(readings) == 2:
-            actual_mw = sum(readings) / 2.0
+    for hour_start, slots in hourly_slots.items():
+        if len(slots) == 2:
+            actual_mw = (slots[0] + slots[1]) / 2.0
             partial = False
-        else:
-            # More than 2 records for one hour — unexpected; use mean and flag
-            actual_mw = sum(readings) / len(readings)
+        elif len(slots) == 1:
+            actual_mw = next(iter(slots.values()))
             partial = True
-            log.warning(
-                "Unexpected %d FUELHH records for hour %s — using mean",
-                len(readings), hour_start,
-            )
+            log.debug("Partial actual for hour %s: single half-hour slot reading %.1f MW", hour_start, actual_mw)
+        else:
+            continue
+
         result[hour_start] = HourlyActual(hour_start=hour_start, actual_mw=actual_mw, partial=partial)
 
     return result

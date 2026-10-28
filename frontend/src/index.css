@@ -1,28 +1,54 @@
 @import "tailwindcss";
 
-/* ---- Design tokens ---- */
+/* --------------------------------------------------------------------------
+   WindLens Editorial Energy Analytics Design System
+   Restrained, light-first visual hierarchy for UK power procurement analysts
+   -------------------------------------------------------------------------- */
+
 :root {
-  --color-bg: #0f1117;
-  --color-surface: #1a1f2e;
-  --color-border: #2a3148;
-  --color-text-primary: #e8eaf0;
-  --color-text-muted: #7a839a;
-  --color-forecast: #60a5fa;   /* blue-400 */
-  --color-actual: #34d399;     /* emerald-400 */
-  --color-over: #fb923c;       /* orange-400 — overforecast */
-  --color-under: #22d3ee;      /* cyan-400 — underforecast */
-  --color-accent: #818cf8;     /* indigo-400 */
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-accent: #0f766e;
+  --color-forecast: #1d4ed8;
+  --color-actual: #047857;
+  --color-over: #c2410c;
+  --color-under: #0284c7;
 }
 
 body {
-  background-color: var(--color-bg);
+  background-color: var(--color-canvas);
   color: var(--color-text-primary);
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--color-surface); }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+/* Accessible focus styling */
+:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 1px;
+}
+
+/* Restrained scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

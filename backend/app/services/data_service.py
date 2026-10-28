@@ -9,7 +9,11 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
-from app.clients.elexon import fetch_fuelhh_wind_for_date, fetch_windfor_published_on
+from app.clients.elexon import (
+    fetch_fuelhh_wind_for_date,
+    fetch_windfor_published_on,
+    get_current_data_source,
+)
 from app.services.alignment import aggregate_fuelhh_to_hourly
 from app.services.selection import (
     select_day_ahead_forecast_run,
@@ -176,7 +180,7 @@ def get_data_quality(
     actual_available = sum(1 for p in pairs if p.actual_mw is not None)
 
     return DataQualityReport(
-        source="live_elexon",
+        source=get_current_data_source(),
         last_fetched_utc=datetime.now(tz=timezone.utc),
         date_from=date_from,
         date_to=date_to,

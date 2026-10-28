@@ -11,16 +11,16 @@ export interface ForecastActualPair {
 }
 
 export interface AccuracyMetrics {
-  mae_mw: number;
-  rmse_mw: number;
-  bias_mw: number;
+  mae_mw: number | null;
+  rmse_mw: number | null;
+  bias_mw: number | null;
   matched_pairs: number;
   expected_intervals: number;
   coverage_pct: number;
 }
 
 export interface DataQualityReport {
-  source: 'live_elexon' | 'fixture';
+  source: 'live_elexon' | 'fixture' | 'fixture_fallback' | 'mixed_live_and_fixture';
   last_fetched_utc: string | null;
   date_from: string;
   date_to: string;

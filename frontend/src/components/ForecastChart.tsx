@@ -22,6 +22,7 @@ interface ChartPoint {
   forecast_mw: number | null;
   actual_mw: number | null;
   publish_time: string | null;
+  lead_time_hours: number | null;
   error_mw: number | null;
   actual_partial: boolean;
 }
@@ -29,25 +30,41 @@ interface ChartPoint {
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d: ChartPoint = payload[0]?.payload;
+  if (!d) return null;
+
   return (
-    <div className="rounded-lg border border-[#2a3148] bg-[#0f1117] p-3 text-xs shadow-xl">
-      <p className="mb-1 font-semibold text-[#e8eaf0]">{d.fullHour} UTC</p>
-      {d.forecast_mw != null && (
-        <p className="text-blue-400">Forecast: {d.forecast_mw.toLocaleString()} MW</p>
+    <div className="rounded border border-slate-200 bg-white p-3 text-xs shadow-md space-y-1">
+      <p className="font-semibold text-slate-900 border-b border-slate-100 pb-1">
+        {d.fullHour.replace('T', ' ').slice(0, 16)} UTC
+      </p>
+      {d.forecast_mw !== null && (
+        <div className="flex items-center justify-between gap-4 text-blue-800">
+          <span className="font-medium">Day-Ahead Forecast:</span>
+          <span className="font-mono tabular-nums font-semibold">{d.forecast_mw.toLocaleString()} MW</span>
+        </div>
       )}
-      {d.actual_mw != null && (
-        <p className="text-emerald-400">
-          Actual: {d.actual_mw.toLocaleString()} MW
-          {d.actual_partial && <span className="ml-1 text-orange-400">(partial)</span>}
-        </p>
+      {d.actual_mw !== null && (
+        <div className="flex items-center justify-between gap-4 text-emerald-800">
+          <span className="font-medium">Metered Actual:</span>
+          <span className="font-mono tabular-nums font-semibold">
+            {d.actual_mw.toLocaleString()} MW
+            {d.actual_partial && <span className="ml-1 text-[10px] text-amber-700 font-normal">(1 SP)</span>}
+          </span>
+        </div>
       )}
-      {d.error_mw != null && (
-        <p className={d.error_mw > 0 ? 'text-orange-400' : 'text-cyan-400'}>
-          Error: {d.error_mw > 0 ? '+' : ''}{d.error_mw.toLocaleString()} MW
-        </p>
+      {d.error_mw !== null && (
+        <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100 text-slate-700">
+          <span>Error (Fcst − Act):</span>
+          <span className={`font-mono tabular-nums font-semibold ${d.error_mw > 0 ? 'text-amber-700' : 'text-sky-700'}`}>
+            {d.error_mw > 0 ? '+' : ''}{d.error_mw.toLocaleString()} MW
+          </span>
+        </div>
       )}
       {d.publish_time && (
-        <p className="mt-1 text-[#7a839a]">Published: {formatPublishTime(d.publish_time)}</p>
+        <p className="text-[11px] text-slate-500 pt-1">
+          Run published: {formatPublishTime(d.publish_time)}
+          {d.lead_time_hours !== null && ` (${d.lead_time_hours}h lead)`}
+        </p>
       )}
     </div>
   );
@@ -55,18 +72,18 @@ function CustomTooltip({ active, payload }: any) {
 
 export function ForecastChart({ data, loading }: ForecastChartProps) {
   if (loading) {
-    return <div className="h-80 animate-pulse rounded-lg bg-[#1a1f2e]" />;
+    return <div className="h-80 animate-pulse rounded-lg bg-slate-100 border border-slate-200" />;
   }
   if (!data.length) {
     return (
-      <div className="flex h-80 items-center justify-center rounded-lg border border-[#2a3148] bg-[#1a1f2e] text-[#7a839a]">
-        No data available for the selected range.
+      <div className="flex h-80 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs text-slate-500">
+        No delivery intervals available for the selected parameters.
       </div>
     );
   }
 
   const chartData: ChartPoint[] = data
-    .filter((d) => d.forecast_mw != null || d.actual_mw != null)
+    .filter((d) => d.forecast_mw !== null || d.actual_mw !== null)
     .map((d) => ({
       hour: formatHourOnly(d.delivery_hour),
       fullHour: d.delivery_hour,
@@ -74,42 +91,54 @@ export function ForecastChart({ data, loading }: ForecastChartProps) {
       actual_mw: d.actual_mw,
       error_mw: d.error_mw,
       publish_time: d.publish_time,
+      lead_time_hours: d.lead_time_hours,
       actual_partial: d.actual_partial,
     }));
 
   return (
-    <div className="rounded-lg border border-[#2a3148] bg-[#1a1f2e] p-4">
-      <h3 className="mb-1 text-sm font-semibold text-[#e8eaf0]">Forecast vs Actual Wind Generation</h3>
-      <p className="mb-4 text-xs text-[#7a839a]">Day-ahead forecast (selected run before cutoff) vs metered actual (MW, hourly average)</p>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData} margin={{ top: 4, right: 20, left: 10, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#2a3148" />
+    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-2xs">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">
+            Day-Ahead Forecast vs Metered Generation
+          </h3>
+          <p className="text-xs text-slate-500">
+            WINDFOR publication before cutoff compared against FUELHH settlement actuals (MW)
+          </p>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <LineChart data={chartData} margin={{ top: 8, right: 16, left: 10, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
           <XAxis
             dataKey="hour"
-            tick={{ fill: '#7a839a', fontSize: 11 }}
+            tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
-            axisLine={{ stroke: '#2a3148' }}
+            axisLine={{ stroke: '#cbd5e1' }}
             interval="preserveStartEnd"
           />
           <YAxis
-            tick={{ fill: '#7a839a', fontSize: 11 }}
+            tick={{ fill: '#64748b', fontSize: 11 }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
             unit=" MW"
-            width={60}
+            width={65}
           />
           <Tooltip content={<CustomTooltip />} />
           <Legend
+            verticalAlign="top"
+            align="right"
+            wrapperStyle={{ paddingBottom: '12px', fontSize: '12px', color: '#475569' }}
             formatter={(value) =>
-              value === 'forecast_mw' ? 'Forecast (Day-Ahead)' : 'Actual'
+              value === 'forecast_mw' ? 'Day-Ahead Forecast' : 'Metered Actual'
             }
-            wrapperStyle={{ fontSize: 12, color: '#7a839a' }}
           />
           <Line
             type="monotone"
             dataKey="forecast_mw"
-            stroke="#60a5fa"
+            stroke="#1d4ed8"
             strokeWidth={2}
             dot={false}
             connectNulls={false}
@@ -118,7 +147,7 @@ export function ForecastChart({ data, loading }: ForecastChartProps) {
           <Line
             type="monotone"
             dataKey="actual_mw"
-            stroke="#34d399"
+            stroke="#047857"
             strokeWidth={2}
             dot={false}
             connectNulls={false}
