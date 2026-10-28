@@ -33,38 +33,56 @@ function CustomTooltip({ active, payload }: any) {
   if (!d) return null;
 
   return (
-    <div className="rounded border border-slate-200 bg-white p-3 text-xs shadow-md space-y-1">
-      <p className="font-semibold text-slate-900 border-b border-slate-100 pb-1">
-        {d.fullHour.replace('T', ' ').slice(0, 16)} UTC
-      </p>
-      {d.forecast_mw !== null && (
-        <div className="flex items-center justify-between gap-4 text-blue-800">
-          <span className="font-medium">Day-Ahead Forecast:</span>
-          <span className="font-mono tabular-nums font-semibold">{d.forecast_mw.toLocaleString()} MW</span>
-        </div>
-      )}
-      {d.actual_mw !== null && (
-        <div className="flex items-center justify-between gap-4 text-emerald-800">
-          <span className="font-medium">Metered Actual:</span>
-          <span className="font-mono tabular-nums font-semibold">
-            {d.actual_mw.toLocaleString()} MW
-            {d.actual_partial && <span className="ml-1 text-[10px] text-amber-700 font-normal">(1 SP)</span>}
+    <div className="rounded-lg border border-slate-200/90 bg-white p-3.5 text-xs shadow-lg space-y-2 min-w-[240px]">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+        <span className="font-semibold text-slate-900 font-mono text-[11px]">
+          {d.fullHour.replace('T', ' ').slice(0, 16)} UTC
+        </span>
+        {d.actual_partial && (
+          <span className="text-[10px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-1 py-0.2 rounded">
+            Partial (1 SP)
           </span>
-        </div>
-      )}
-      {d.error_mw !== null && (
-        <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100 text-slate-700">
-          <span>Error (Fcst − Act):</span>
-          <span className={`font-mono tabular-nums font-semibold ${d.error_mw > 0 ? 'text-amber-700' : 'text-sky-700'}`}>
-            {d.error_mw > 0 ? '+' : ''}{d.error_mw.toLocaleString()} MW
-          </span>
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className="space-y-1.5 text-xs">
+        {d.forecast_mw !== null && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+              <span className="h-2 w-2 rounded-full bg-[#1d4ed8] inline-block" />
+              <span>Day-Ahead Forecast:</span>
+            </span>
+            <span className="font-mono tabular-nums font-semibold text-slate-900">
+              {d.forecast_mw.toLocaleString()} MW
+            </span>
+          </div>
+        )}
+        {d.actual_mw !== null && (
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+              <span className="h-2 w-2 rounded-full bg-[#047857] inline-block" />
+              <span>Metered Actual:</span>
+            </span>
+            <span className="font-mono tabular-nums font-semibold text-slate-900">
+              {d.actual_mw.toLocaleString()} MW
+            </span>
+          </div>
+        )}
+        {d.error_mw !== null && (
+          <div className="flex items-center justify-between gap-4 pt-1 border-t border-slate-100">
+            <span className="text-slate-500">Forecast Deviation:</span>
+            <span className={`font-mono tabular-nums font-semibold ${d.error_mw > 0 ? 'text-amber-800' : 'text-sky-800'}`}>
+              {d.error_mw > 0 ? '+' : ''}{d.error_mw.toLocaleString()} MW
+            </span>
+          </div>
+        )}
+      </div>
+
       {d.publish_time && (
-        <p className="text-[11px] text-slate-500 pt-1">
-          Run published: {formatPublishTime(d.publish_time)}
-          {d.lead_time_hours !== null && ` (${d.lead_time_hours}h lead)`}
-        </p>
+        <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-100 flex items-center justify-between">
+          <span>Run: {formatPublishTime(d.publish_time).replace(' UTC', '')}</span>
+          {d.lead_time_hours !== null && <span>{d.lead_time_hours}h lead</span>}
+        </div>
       )}
     </div>
   );
@@ -72,11 +90,11 @@ function CustomTooltip({ active, payload }: any) {
 
 export function ForecastChart({ data, loading }: ForecastChartProps) {
   if (loading) {
-    return <div className="h-80 animate-pulse rounded-lg bg-slate-100 border border-slate-200" />;
+    return <div className="h-84 animate-pulse rounded-lg bg-slate-100 border border-slate-200 shadow-[0_1px_3px_rgba(15,23,42,0.03)]" />;
   }
   if (!data.length) {
     return (
-      <div className="flex h-80 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs text-slate-500">
+      <div className="flex h-84 items-center justify-center rounded-lg border border-slate-200 bg-white text-xs text-slate-500 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
         No delivery intervals available for the selected parameters.
       </div>
     );
@@ -96,14 +114,19 @@ export function ForecastChart({ data, loading }: ForecastChartProps) {
     }));
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-2xs">
-      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="rounded-lg border border-slate-200/90 bg-white p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-900">
-            Day-Ahead Forecast vs Metered Generation
-          </h3>
-          <p className="text-xs text-slate-500">
-            WINDFOR publication before cutoff compared against FUELHH settlement actuals (MW)
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-slate-900 tracking-tight">
+              Day-Ahead Forecast vs Metered Generation
+            </h3>
+            <span className="text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+              Hourly Average [MW]
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Elexon WINDFOR publication run before cutoff compared against FUELHH settlement actuals
           </p>
         </div>
       </div>
@@ -130,9 +153,9 @@ export function ForecastChart({ data, loading }: ForecastChartProps) {
           <Legend
             verticalAlign="top"
             align="right"
-            wrapperStyle={{ paddingBottom: '12px', fontSize: '12px', color: '#475569' }}
+            wrapperStyle={{ paddingBottom: '12px', fontSize: '11px', color: '#475569' }}
             formatter={(value) =>
-              value === 'forecast_mw' ? 'Day-Ahead Forecast' : 'Metered Actual'
+              value === 'forecast_mw' ? 'Day-Ahead Forecast (WINDFOR)' : 'Metered Outturn (FUELHH)'
             }
           />
           <Line
@@ -158,3 +181,4 @@ export function ForecastChart({ data, loading }: ForecastChartProps) {
     </div>
   );
 }
+

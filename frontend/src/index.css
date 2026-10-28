@@ -3,18 +3,20 @@
 /* --------------------------------------------------------------------------
    WindLens Editorial Energy Analytics Design System
    Restrained, light-first visual hierarchy for UK power procurement analysts
+   Inspired by high-craft editorial analytics and Neutomni design craftsmanship
    -------------------------------------------------------------------------- */
 
 :root {
   --color-canvas: #f8fafc;
   --color-surface: #ffffff;
-  --color-surface-subtle: #f1f5f9;
+  --color-surface-subtle: #f8fafc;
   --color-border: #e2e8f0;
   --color-border-subtle: #f1f5f9;
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
   --color-text-muted: #64748b;
   --color-accent: #0f766e;
+  --color-accent-subtle: #f0fdfa;
   --color-forecast: #1d4ed8;
   --color-actual: #047857;
   --color-over: #c2410c;
@@ -24,11 +26,20 @@
 body {
   background-color: var(--color-canvas);
   color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+code, kbd, samp, pre, .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 /* Accessible focus styling */
@@ -39,16 +50,17 @@ body {
 
 /* Restrained scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
