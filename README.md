@@ -674,7 +674,7 @@ In compliance with the Gridbricks Full-Stack SWE Challenge requirements, this ap
 
 ## 19. References & Authoritative Documentation
 
-1. **Gridbricks Full-Stack SWE Challenge**: Official hiring assessment problem specification (January 2026 Great Britain power procurement use case).
+1. **Gridbricks Full-Stack SWE Challenge**: Official hiring assessment problem specification (`REint Full Stack SWE challenge v4 Shared.docx`, January 2026 Great Britain power procurement use case).
 2. **Elexon BMRS Portal**: [https://bmrs.elexon.co.uk](https://bmrs.elexon.co.uk)
 3. **Elexon BMRS API Documentation**: [https://bmrs.elexon.co.uk/api-documentation](https://bmrs.elexon.co.uk/api-documentation)
 4. **FUELHH Dataset Specification**: [https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream)

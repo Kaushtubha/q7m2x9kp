@@ -42,3 +42,9 @@ Thumbs.db
 # Secrets — never commit real env files
 .env
 .env.production
+
+# LaTeX and private deliverables
+*.tex
+*.pdf
+*PRIVATE*
+

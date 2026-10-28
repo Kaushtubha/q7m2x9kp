@@ -3,7 +3,7 @@
 **Evaluation Date**: October 29, 2026  
 **Repository**: [https://github.com/Kaushtubha/q7m2x9kp](https://github.com/Kaushtubha/q7m2x9kp)  
 **Functional Implementation Baseline**: `13e321943c7bfe8bafeea08e28063259b3be5d8e` (core code, tests, and deployments)  
-**Audit Evaluation Baseline**: Commit `cce839d73ff0906b314f0e95fa5bf1afb83474e9`  
+**Audit Evaluation Baseline**: Commit `f3d0e7398570d65c790180b7a9a82c76c100f388`  
 **Production Frontend**: [https://windlens-analytics.vercel.app/](https://windlens-analytics.vercel.app/)  
 **Production Backend**: [https://windlens-backend-5xda.onrender.com](https://windlens-backend-5xda.onrender.com)  
 
@@ -11,8 +11,8 @@
 
 ## 1. Compliance Summary & Status Counts
 
-> **Traceability & Scope Disclosure**: The requirements below were extracted directly from the candidate hiring challenge master prompt and project specification provided at the start of development (the standalone original PDF/DOCX was not provided as a discrete repository file). To maintain strict evaluative integrity, requirements are grouped into:
-> - **Explicit Assignment Requirements**: Core functional and deliverable mandates specified by Gridbricks (React frontend, Python backend, FUELHH actuals, WINDFOR forecasts, January 2026 scope, Docker, public cloud deployment, anonymous repo, README with startup & deployment & AI disclosure, unlisted YouTube video).
+> **Authoritative Specification Verification**: The requirements below have been directly verified against the authoritative challenge document: `REint Full Stack SWE challenge v4 Shared.docx` (verified in `C:\Users\kaush\Downloads\REint Full Stack SWE challenge v4 Shared.docx`). To maintain strict evaluative integrity, requirements are grouped into:
+> - **Explicit Assignment Requirements**: Core functional and deliverable mandates specified by Gridbricks (React frontend, Python backend, FUELHH actuals, WINDFOR forecasts, January 2026 scope, Docker, public cloud deployment on Vercel/Heroku/Render, anonymous public GitHub repository, README with startup & deployment & AI disclosure, unlisted YouTube video $\le 10$ minutes with 5-min client presentation and 5-min technical review).
 > - **Project Implementation Assumptions**: Analytical design choices introduced to make the pipeline concrete (11:00 UTC D-1 decision cutoff assumption approximating pre-noon gate closure, half-hourly $(\text{SP}_1 + \text{SP}_2)/2$ instantaneous power averaging, intentional omission of MAPE to avoid zero-denominator distortion). These assumptions are clearly labeled as engineering design choices, not official statutory market rules.
 
 ### Status Counts & Submission Readiness Breakdown
