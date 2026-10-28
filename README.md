@@ -155,25 +155,16 @@ npm run dev -- --host 127.0.0.1 --port 3000
 
 ## 7. Production Deployment Guide
 
-### A. Deploy Backend to Render
+### A. Deployed Backend (Live on Render)
 
-1. Log into [Render Dashboard](https://dashboard.render.com/).
-2. Click **New +** → **Blueprint** and select your repository (`https://github.com/Kaushtubha/q7m2x9kp`). Render will automatically detect [`render.yaml`](render.yaml).
-3. Alternatively, click **New +** → **Web Service**:
-   - **Repository**: `https://github.com/Kaushtubha/q7m2x9kp`
-   - **Root Directory**: `backend`
-   - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Environment Variables**:
-     - `PYTHON_VERSION`: `3.11.9`
-     - `USE_FIXTURES`: `false`
-     - `DEFAULT_CUTOFF_HOUR`: `11`
-     - `ALLOWED_ORIGINS`: `*`
-4. Once deployed, verify:
-   ```bash
-   curl -i https://<your-backend>.onrender.com/health
-   ```
+- **Live URL**: `https://windlens-backend-5xda.onrender.com`
+- **Health Check**: [`https://windlens-backend-5xda.onrender.com/health`](https://windlens-backend-5xda.onrender.com/health)
+- **Verified January 1–3, 2026 Live Query**:
+  ```bash
+  curl -i "https://windlens-backend-5xda.onrender.com/api/accuracy?date_from=2026-01-01&date_to=2026-01-03&cutoff_hour=11"
+  # Returns: {"mae_mw":3185.54,"rmse_mw":3420.67,"bias_mw":3185.54,"matched_pairs":72,"expected_intervals":72,"coverage_pct":100.0}
+  ```
+
 
 ### B. Deploy Frontend to Vercel
 
